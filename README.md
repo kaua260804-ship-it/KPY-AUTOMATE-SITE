@@ -1,8 +1,5 @@
 # 🚀 K'PY AUTOMATE - Sistema de Análise Comercial
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://SEU-USUARIO.github.io/KPY-AUTOMATE-SITE/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
 ## 📊 Sobre o Projeto
 
 O **K'PY AUTOMATE** é um sistema web profissional para análise de dados comerciais de supermercados/redes de varejo, focado em processar relatórios do sistema SGE (Sistema de Gestão Empresarial).
@@ -28,7 +25,7 @@ O **K'PY AUTOMATE** é um sistema web profissional para análise de dados comerc
 ## 🚀 Como Usar
 
 ### Acesse o site
-👉 **[https://SEU-USUARIO.github.io/KPY-AUTOMATE-SITE/](https://SEU-USUARIO.github.io/KPY-AUTOMATE-SITE/)**
+👉 **[https://SEU-USUARIO.github.io/KPY-AUTOMATE-SITE/][(https://SEU-USUARIO.github.io/KPY-AUTOMATE-SITE/)](https://kaua260804-ship-it.github.io/KPY-AUTOMATE-SITE/)**
 
 ### Credenciais de Teste
 | E-mail | Senha |
@@ -67,10 +64,5 @@ O **K'PY AUTOMATE** é um sistema web profissional para análise de dados comerc
 ## 🛠️ Tecnologias
 
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Bibliotecas**: 
-  - [SheetJS](https://sheetjs.com/) - Leitura de arquivos Excel
-  - [Font Awesome](https://fontawesome.com/) - Ícones
-  - [Google Fonts](https://fonts.google.com/) - Fontes (Inter)
-- **Hospedagem**: GitHub Pages
 
-## 📁 Estrutura do Projeto
+- **Hospedagem**: GitHub Pages
