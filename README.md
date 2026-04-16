@@ -25,7 +25,7 @@ O **K'PY AUTOMATE** é um sistema web profissional para análise de dados comerc
 ## 🚀 Como Usar
 
 ### Acesse o site
-👉 **[https://SEU-USUARIO.github.io/KPY-AUTOMATE-SITE/][(https://SEU-USUARIO.github.io/KPY-AUTOMATE-SITE/)](https://kaua260804-ship-it.github.io/KPY-AUTOMATE-SITE/)**
+👉 **(https://kaua260804-ship-it.github.io/KPY-AUTOMATE-SITE/)**
 
 ### Credenciais de Teste
 | E-mail | Senha |
