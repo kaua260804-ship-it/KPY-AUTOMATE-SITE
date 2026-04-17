@@ -2,7 +2,11 @@
 
 let relatorioDadosAtuais = null;
 let relatorioLojasDisponiveis = [];
+let relatorioGruposDisponiveis = [];
+let relatorioCompradoresDisponiveis = [];
 let relatorioLojasSelecionadas = [];
+let relatorioGruposSelecionados = [];
+let relatorioCompradoresSelecionados = [];
 let relatorioArquivoEstoque = null;
 let relatorioArquivoCurva = null;
 let relatorioProcessado = false;
@@ -24,7 +28,7 @@ function renderizarRelatorio() {
         <div class="file-area" id="uploadAreaEstoque">
             <i class="fas fa-boxes"></i>
             <p>Clique ou arraste o arquivo de ESTOQUE</p>
-            <div class="file-info">Formatos: .xlsx, .xls | Relatório de Estoque</div>
+            <div class="file-info">Formatos: .xlsx, .xls | Relatorio de Estoque</div>
             <input type="file" id="fileInputEstoque" accept=".xlsx,.xls" style="display: none">
             <div id="nomeArquivoEstoque" style="margin-top: 8px; font-size: 11px; color: #4caf50;"></div>
         </div>
@@ -39,7 +43,7 @@ function renderizarRelatorio() {
         
         <div class="btn-group">
             <button class="btn btn-primary" id="btnProcessarRelatorio" disabled>
-                <i class="fas fa-cogs"></i> Gerar Relatório
+                <i class="fas fa-cogs"></i> Gerar Relatorio
             </button>
             <button class="btn btn-secondary" id="btnFiltrarRelatorio" style="display: none;">
                 <i class="fas fa-filter"></i> Filtrar
@@ -58,9 +62,11 @@ function renderizarRelatorio() {
         <div id="resultadoAreaRelatorio" style="display: none;">
             <div id="cardsResultadoRelatorio" class="cards-grid"></div>
             <div id="resumoLojasRelatorio" class="preview-area" style="margin-bottom: 15px;"></div>
+            <div id="resumoGruposRelatorio" class="preview-area" style="margin-bottom: 15px;"></div>
+            <div id="resumoCompradoresRelatorio" class="preview-area" style="margin-bottom: 15px;"></div>
             <div class="preview-area">
                 <div class="preview-header">
-                    <h4><i class="fas fa-table"></i> Relatório de Ruptura</h4>
+                    <h4><i class="fas fa-table"></i> Relatorio de Ruptura</h4>
                     <span id="filterBadgeRelatorio" class="filter-badge" style="display: none;"></span>
                 </div>
                 <div class="preview-content" id="previewContentRelatorio">
@@ -71,48 +77,47 @@ function renderizarRelatorio() {
         
         <div class="preview-area">
             <div class="preview-header">
-                <h4><i class="fas fa-info-circle"></i> Instruções</h4>
+                <h4><i class="fas fa-info-circle"></i> Instrucoes</h4>
             </div>
             <div class="preview-content">
-                <p><strong>📋 Relatório de Ruptura</strong></p>
-                <p>Este relatório combina 3 fontes de dados:</p>
+                <p><strong>📋 Relatorio de Ruptura</strong></p>
+                <p>Este relatorio combina 3 fontes de dados:</p>
                 <ol>
-                    <li><strong>Estoque</strong> - Arquivo de estoque (obrigatório)</li>
-                    <li><strong>Curva ABC</strong> - Arquivo de vendas (obrigatório)</li>
-                    <li><strong>Média de Vendas</strong> - Arquivo fixo (media_vendas.xlsx)</li>
+                    <li><strong>Estoque</strong> - Arquivo de estoque (obrigatorio)</li>
+                    <li><strong>Curva ABC</strong> - Arquivo de vendas (obrigatorio)</li>
+                    <li><strong>Media de Vendas</strong> - Arquivo fixo (media_vendas.xlsx)</li>
                 </ol>
-                <p>O relatório identifica produtos em RUPTURA (com venda mas sem estoque).</p>
-                <p><strong>Funcionalidades:</strong> Filtrar por loja, Varrer (remover matriz, NC e zerados), Exportar para Excel.</p>
+                <p>O relatorio identifica produtos em RUPTURA (com venda mas sem estoque).</p>
+                <p><strong>Funcionalidades:</strong> Filtrar por loja, grupo, comprador, Varrer (remover matriz, NC e zerados), Exportar para Excel.</p>
             </div>
         </div>
     `;
 }
 
 function inicializarRelatorio() {
-    console.log('🚀 inicializarRelatorio chamado');
+    console.log("inicializarRelatorio chamado");
     
-    const uploadAreaEstoque = document.getElementById('uploadAreaEstoque');
-    const fileInputEstoque = document.getElementById('fileInputEstoque');
-    const uploadAreaCurva = document.getElementById('uploadAreaCurva');
-    const fileInputCurva = document.getElementById('fileInputCurva');
-    const btnProcessar = document.getElementById('btnProcessarRelatorio');
-    const nomeEstoqueSpan = document.getElementById('nomeArquivoEstoque');
-    const nomeCurvaSpan = document.getElementById('nomeArquivoCurva');
-    const statusSpan = document.getElementById('statusRelatorio');
+    const uploadAreaEstoque = document.getElementById("uploadAreaEstoque");
+    const fileInputEstoque = document.getElementById("fileInputEstoque");
+    const uploadAreaCurva = document.getElementById("uploadAreaCurva");
+    const fileInputCurva = document.getElementById("fileInputCurva");
+    const btnProcessar = document.getElementById("btnProcessarRelatorio");
+    const nomeEstoqueSpan = document.getElementById("nomeArquivoEstoque");
+    const nomeCurvaSpan = document.getElementById("nomeArquivoCurva");
+    const statusSpan = document.getElementById("statusRelatorio");
     
     function verificarPronto() {
         const pronto = relatorioArquivoEstoque && relatorioArquivoCurva;
         btnProcessar.disabled = !pronto;
         if (pronto) {
-            statusSpan.innerHTML = '✅ Arquivos selecionados. Clique em Gerar Relatório!';
-            statusSpan.style.color = '#4caf50';
+            statusSpan.innerHTML = "✅ Arquivos selecionados. Clique em Gerar Relatorio!";
+            statusSpan.style.color = "#4caf50";
         } else {
-            statusSpan.innerHTML = '⚠️ Selecione os dois arquivos (Estoque e Curva ABC)';
-            statusSpan.style.color = '#ffd43b';
+            statusSpan.innerHTML = "⚠️ Selecione os dois arquivos (Estoque e Curva ABC)";
+            statusSpan.style.color = "#ffd43b";
         }
     }
     
-    // Upload Estoque
     if (uploadAreaEstoque) {
         uploadAreaEstoque.onclick = () => fileInputEstoque.click();
     }
@@ -120,29 +125,28 @@ function inicializarRelatorio() {
         fileInputEstoque.onchange = (e) => {
             if (e.target.files.length > 0) {
                 relatorioArquivoEstoque = e.target.files[0];
-                nomeEstoqueSpan.innerHTML = `📂 ${relatorioArquivoEstoque.name}`;
-                showToast(`Arquivo de Estoque selecionado: ${relatorioArquivoEstoque.name}`, 'success');
+                nomeEstoqueSpan.innerHTML = "📂 " + relatorioArquivoEstoque.name;
+                showToast("Arquivo de Estoque selecionado: " + relatorioArquivoEstoque.name, "success");
                 verificarPronto();
             }
         };
     }
     if (uploadAreaEstoque) {
-        uploadAreaEstoque.ondragover = (e) => { e.preventDefault(); uploadAreaEstoque.classList.add('drag-over'); };
-        uploadAreaEstoque.ondragleave = () => uploadAreaEstoque.classList.remove('drag-over');
+        uploadAreaEstoque.ondragover = (e) => { e.preventDefault(); uploadAreaEstoque.classList.add("drag-over"); };
+        uploadAreaEstoque.ondragleave = () => uploadAreaEstoque.classList.remove("drag-over");
         uploadAreaEstoque.ondrop = (e) => {
             e.preventDefault();
-            uploadAreaEstoque.classList.remove('drag-over');
+            uploadAreaEstoque.classList.remove("drag-over");
             const files = Array.from(e.dataTransfer.files);
             if (files.length > 0) {
                 relatorioArquivoEstoque = files[0];
-                nomeEstoqueSpan.innerHTML = `📂 ${relatorioArquivoEstoque.name}`;
-                showToast(`Arquivo de Estoque recebido: ${relatorioArquivoEstoque.name}`, 'success');
+                nomeEstoqueSpan.innerHTML = "📂 " + relatorioArquivoEstoque.name;
+                showToast("Arquivo de Estoque recebido: " + relatorioArquivoEstoque.name, "success");
                 verificarPronto();
             }
         };
     }
     
-    // Upload Curva ABC
     if (uploadAreaCurva) {
         uploadAreaCurva.onclick = () => fileInputCurva.click();
     }
@@ -150,23 +154,23 @@ function inicializarRelatorio() {
         fileInputCurva.onchange = (e) => {
             if (e.target.files.length > 0) {
                 relatorioArquivoCurva = e.target.files[0];
-                nomeCurvaSpan.innerHTML = `📂 ${relatorioArquivoCurva.name}`;
-                showToast(`Arquivo de Curva ABC selecionado: ${relatorioArquivoCurva.name}`, 'success');
+                nomeCurvaSpan.innerHTML = "📂 " + relatorioArquivoCurva.name;
+                showToast("Arquivo de Curva ABC selecionado: " + relatorioArquivoCurva.name, "success");
                 verificarPronto();
             }
         };
     }
     if (uploadAreaCurva) {
-        uploadAreaCurva.ondragover = (e) => { e.preventDefault(); uploadAreaCurva.classList.add('drag-over'); };
-        uploadAreaCurva.ondragleave = () => uploadAreaCurva.classList.remove('drag-over');
+        uploadAreaCurva.ondragover = (e) => { e.preventDefault(); uploadAreaCurva.classList.add("drag-over"); };
+        uploadAreaCurva.ondragleave = () => uploadAreaCurva.classList.remove("drag-over");
         uploadAreaCurva.ondrop = (e) => {
             e.preventDefault();
-            uploadAreaCurva.classList.remove('drag-over');
+            uploadAreaCurva.classList.remove("drag-over");
             const files = Array.from(e.dataTransfer.files);
             if (files.length > 0) {
                 relatorioArquivoCurva = files[0];
-                nomeCurvaSpan.innerHTML = `📂 ${relatorioArquivoCurva.name}`;
-                showToast(`Arquivo de Curva ABC recebido: ${relatorioArquivoCurva.name}`, 'success');
+                nomeCurvaSpan.innerHTML = "📂 " + relatorioArquivoCurva.name;
+                showToast("Arquivo de Curva ABC recebido: " + relatorioArquivoCurva.name, "success");
                 verificarPronto();
             }
         };
@@ -175,11 +179,11 @@ function inicializarRelatorio() {
     if (btnProcessar) {
         btnProcessar.onclick = async () => {
             if (!relatorioArquivoEstoque || !relatorioArquivoCurva) {
-                showToast('Selecione os dois arquivos!', 'error');
+                showToast("Selecione os dois arquivos!", "error");
                 return;
             }
             
-            showToast('📊 Gerando relatório de ruptura...', 'info');
+            showToast("📊 Gerando relatorio de ruptura...", "info");
             btnProcessar.disabled = true;
             btnProcessar.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Gerando...';
             
@@ -191,74 +195,78 @@ function inicializarRelatorio() {
                 );
                 
                 if (!resultado || !resultado.success) {
-                    throw new Error(resultado?.error || 'Falha no processamento');
+                    throw new Error(resultado?.error || "Falha no processamento");
                 }
                 
                 relatorioDadosAtuais = resultado.dados;
                 relatorioLojasDisponiveis = resultado.lojas || [];
+                relatorioGruposDisponiveis = resultado.grupos || [];
+                relatorioCompradoresDisponiveis = resultado.compradores || [];
                 relatorioProcessado = true;
                 
                 mostrarResultadoRelatorio(resultado);
-                showToast(`✅ Relatório gerado! ${resultado.dados.length} registros, ${resultado.lojas.length} lojas`, 'success');
+                showToast("✅ Relatorio gerado! " + resultado.dados.length + " registros, " + resultado.lojas.length + " lojas", "success");
                 
-                const btnFiltrar = document.getElementById('btnFiltrarRelatorio');
-                const btnVarrer = document.getElementById('btnVarrerRelatorio');
-                const btnExportar = document.getElementById('btnExportarRelatorio');
-                const btnLimpar = document.getElementById('btnLimparRelatorio');
+                const btnFiltrar = document.getElementById("btnFiltrarRelatorio");
+                const btnVarrer = document.getElementById("btnVarrerRelatorio");
+                const btnExportar = document.getElementById("btnExportarRelatorio");
+                const btnLimpar = document.getElementById("btnLimparRelatorio");
                 
                 if (btnFiltrar) {
-                    btnFiltrar.style.display = 'block';
+                    btnFiltrar.style.display = "block";
                     btnFiltrar.onclick = () => abrirFiltroRelatorio();
                 }
                 if (btnVarrer) {
-                    btnVarrer.style.display = 'block';
+                    btnVarrer.style.display = "block";
                     btnVarrer.onclick = () => confirmarVarredura();
                 }
                 if (btnExportar) {
-                    btnExportar.style.display = 'block';
+                    btnExportar.style.display = "block";
                     btnExportar.onclick = () => exportarRelatorio();
                 }
                 if (btnLimpar) {
-                    btnLimpar.style.display = 'block';
+                    btnLimpar.style.display = "block";
                     btnLimpar.onclick = () => limparRelatorio();
                 }
                 
             } catch (error) {
-                console.error('❌ Erro:', error);
-                showToast('❌ Erro ao gerar relatório: ' + error.message, 'error');
+                console.error("Erro:", error);
+                showToast("❌ Erro ao gerar relatorio: " + error.message, "error");
             } finally {
                 btnProcessar.disabled = false;
-                btnProcessar.innerHTML = '<i class="fas fa-cogs"></i> Gerar Relatório';
+                btnProcessar.innerHTML = '<i class="fas fa-cogs"></i> Gerar Relatorio';
             }
         };
     }
 }
 
 function formatarNumeroBR(valor, decimais = 2) {
-    if (valor === undefined || valor === null || isNaN(valor)) return '0,00';
-    return valor.toLocaleString('pt-BR', { minimumFractionDigits: decimais, maximumFractionDigits: decimais });
+    if (valor === undefined || valor === null || isNaN(valor)) return "0,00";
+    return valor.toLocaleString("pt-BR", { minimumFractionDigits: decimais, maximumFractionDigits: decimais });
 }
 
 function formatarQuantidadeBR(valor) {
-    if (valor === undefined || valor === null || isNaN(valor)) return '0';
-    if (Number.isInteger(valor)) return valor.toLocaleString('pt-BR');
-    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    if (valor === undefined || valor === null || isNaN(valor)) return "0";
+    if (Number.isInteger(valor)) return valor.toLocaleString("pt-BR");
+    return valor.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 }
 
 function mostrarResultadoRelatorio(resultado) {
-    const resultadoArea = document.getElementById('resultadoAreaRelatorio');
-    const cardsDiv = document.getElementById('cardsResultadoRelatorio');
-    const resumoLojasDiv = document.getElementById('resumoLojasRelatorio');
-    const previewContent = document.getElementById('previewContentRelatorio');
+    const resultadoArea = document.getElementById("resultadoAreaRelatorio");
+    const cardsDiv = document.getElementById("cardsResultadoRelatorio");
+    const resumoLojasDiv = document.getElementById("resumoLojasRelatorio");
+    const resumoGruposDiv = document.getElementById("resumoGruposRelatorio");
+    const resumoCompradoresDiv = document.getElementById("resumoCompradoresRelatorio");
+    const previewContent = document.getElementById("previewContentRelatorio");
     
-    if (resultadoArea) resultadoArea.style.display = 'block';
+    if (resultadoArea) resultadoArea.style.display = "block";
     
     const stats = resultado.estatisticas || {};
     
     if (cardsDiv) {
         cardsDiv.innerHTML = `
             <div class="card"><div class="card-title">📦 PRODUTOS</div><div class="card-value">${(stats.totalRegistros || 0).toLocaleString()}</div></div>
-            <div class="card"><div class="card-title">🆔 PRODUTOS ÚNICOS</div><div class="card-value">${(stats.totalProdutosUnicos || 0).toLocaleString()}</div></div>
+            <div class="card"><div class="card-title">🆔 PRODUTOS UNICOS</div><div class="card-value">${(stats.totalProdutosUnicos || 0).toLocaleString()}</div></div>
             <div class="card"><div class="card-title">🏪 LOJAS</div><div class="card-value">${(stats.totalLojas || 0).toLocaleString()}</div></div>
             <div class="card"><div class="card-title">⚠️ % RUPTURA</div><div class="card-value">${(stats.percentualRuptura || 0).toFixed(1)}%</div></div>
             <div class="card"><div class="card-title">⚠️ EM RUPTURA</div><div class="card-value">${(stats.totalRuptura || 0).toLocaleString()}</div></div>
@@ -268,11 +276,10 @@ function mostrarResultadoRelatorio(resultado) {
         `;
     }
     
-    // Resumo por Loja
     if (resumoLojasDiv && stats.porLoja) {
         let html = '<div class="preview-header"><h4><i class="fas fa-store"></i> Ruptura por Loja</h4></div><div class="preview-content"><pre>';
-        html += 'LOJA                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n';
-        html += '----------------------------------  ----------  ----------  -----  ------------------\n';
+        html += "LOJA                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
+        html += "----------------------------------  ----------  ----------  -----  ------------------\n";
         
         const lojasOrdenadas = Object.entries(stats.porLoja).sort((a, b) => b[1].valor - a[1].valor);
         for (const [loja, dados] of lojasOrdenadas) {
@@ -280,30 +287,66 @@ function mostrarResultadoRelatorio(resultado) {
             const produtos = String(dados.produtos || 0).padStart(10);
             const ruptura = String(dados.ruptura || 0).padStart(10);
             const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
-            const valor = ('R$ ' + formatarNumeroBR(dados.valor || 0)).padStart(18);
-            html += `${nome}  ${produtos}  ${ruptura}  ${String(percentual).padStart(5)}%  ${valor}\n`;
+            const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
+            html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
         }
-        html += '</pre></div>';
+        html += "</pre></div>";
         resumoLojasDiv.innerHTML = html;
     }
     
+    if (resumoGruposDiv && stats.porGrupo) {
+        let html = '<div class="preview-header"><h4><i class="fas fa-folder"></i> Ruptura por Grupo</h4></div><div class="preview-content"><pre>';
+        html += "GRUPO                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
+        html += "----------------------------------  ----------  ----------  -----  ------------------\n";
+        
+        const gruposOrdenados = Object.entries(stats.porGrupo).sort((a, b) => b[1].valor - a[1].valor);
+        for (const [grupo, dados] of gruposOrdenados) {
+            const nome = String(grupo).slice(0, 34).padEnd(34);
+            const produtos = String(dados.produtos || 0).padStart(10);
+            const ruptura = String(dados.ruptura || 0).padStart(10);
+            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
+            html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
+        }
+        html += "</pre></div>";
+        resumoGruposDiv.innerHTML = html;
+    }
+    
+    if (resumoCompradoresDiv && stats.porComprador) {
+        let html = '<div class="preview-header"><h4><i class="fas fa-users"></i> Ruptura por Comprador</h4></div><div class="preview-content"><pre>';
+        html += "COMPRADOR                          PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
+        html += "----------------------------------  ----------  ----------  -----  ------------------\n";
+        
+        const compradoresOrdenados = Object.entries(stats.porComprador).sort((a, b) => b[1].valor - a[1].valor);
+        for (const [comprador, dados] of compradoresOrdenados) {
+            const nome = String(comprador).slice(0, 34).padEnd(34);
+            const produtos = String(dados.produtos || 0).padStart(10);
+            const ruptura = String(dados.ruptura || 0).padStart(10);
+            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
+            html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
+        }
+        html += "</pre></div>";
+        resumoCompradoresDiv.innerHTML = html;
+    }
+    
     if (previewContent) {
-        previewContent.innerHTML = `<pre>${formatarPreviewRelatorio((resultado.dados || []).slice(0, 20))}</pre>`;
+        previewContent.innerHTML = "<pre>" + formatarPreviewRelatorio((resultado.dados || []).slice(0, 20)) + "</pre>";
     }
 }
 
 function formatarPreviewRelatorio(dados) {
-    if (!dados || !dados.length) return 'Nenhum dado';
-    let out = 'CÓDIGO    PRODUTO                                    ESTQ      RUPTURA     LOJA                COMPRADOR\n';
-    out += '------    ----------------------------------------  --------  ----------  ------------------  -----------------\n';
+    if (!dados || !dados.length) return "Nenhum dado";
+    let out = "CODIGO    PRODUTO                                    ESTQ      RUPTURA     LOJA                COMPRADOR\n";
+    out += "------    ----------------------------------------  --------  ----------  ------------------  -----------------\n";
     dados.slice(0, 20).forEach(p => {
         const codigo = String(p.codigo).slice(0, 8).padEnd(8);
-        const produto = (p.produto || '').slice(0, 40).padEnd(40);
+        const produto = (p.produto || "").slice(0, 40).padEnd(40);
         const estq = formatarQuantidadeBR(p.estqLoja).padStart(8);
-        const ruptura = (p.ruptura || 'OK').padEnd(10);
-        const loja = (p.loja || '').slice(0, 18).padEnd(18);
-        const comprador = (p.comprador || '').slice(0, 16).padEnd(16);
-        out += `${codigo}  ${produto}  ${estq}  ${ruptura}  ${loja}  ${comprador}\n`;
+        const ruptura = (p.ruptura || "OK").padEnd(10);
+        const loja = (p.loja || "").slice(0, 18).padEnd(18);
+        const comprador = (p.comprador || "").slice(0, 16).padEnd(16);
+        out += codigo + "  " + produto + "  " + estq + "  " + ruptura + "  " + loja + "  " + comprador + "\n";
     });
     return out;
 }
@@ -311,73 +354,59 @@ function formatarPreviewRelatorio(dados) {
 function atualizarPreviewRelatorioFiltrado() {
     if (!relatorioProcessor || !relatorioProcessor.dadosProcessados) return;
     
+    const resumo = relatorioProcessor.getResumoFiltrado(
+        relatorioLojasSelecionadas,
+        relatorioGruposSelecionados,
+        relatorioCompradoresSelecionados
+    );
+    
     let dadosFiltrados = relatorioDadosAtuais;
     if (relatorioLojasSelecionadas.length) {
         dadosFiltrados = dadosFiltrados.filter(p => relatorioLojasSelecionadas.includes(p.loja));
     }
+    if (relatorioGruposSelecionados.length) {
+        dadosFiltrados = dadosFiltrados.filter(p => relatorioGruposSelecionados.includes(p.grupo));
+    }
+    if (relatorioCompradoresSelecionados.length) {
+        dadosFiltrados = dadosFiltrados.filter(p => relatorioCompradoresSelecionados.includes(p.comprador));
+    }
     
-    const previewContent = document.getElementById('previewContentRelatorio');
-    const filterBadge = document.getElementById('filterBadgeRelatorio');
-    const cardsDiv = document.getElementById('cardsResultadoRelatorio');
-    const resumoLojasDiv = document.getElementById('resumoLojasRelatorio');
+    const previewContent = document.getElementById("previewContentRelatorio");
+    const filterBadge = document.getElementById("filterBadgeRelatorio");
+    const cardsDiv = document.getElementById("cardsResultadoRelatorio");
+    const resumoLojasDiv = document.getElementById("resumoLojasRelatorio");
+    const resumoGruposDiv = document.getElementById("resumoGruposRelatorio");
+    const resumoCompradoresDiv = document.getElementById("resumoCompradoresRelatorio");
     
-    if (relatorioLojasSelecionadas.length) {
+    const temFiltros = relatorioLojasSelecionadas.length > 0 || relatorioGruposSelecionados.length > 0 || relatorioCompradoresSelecionados.length > 0;
+    
+    if (temFiltros) {
         if (filterBadge) {
-            filterBadge.style.display = 'inline-flex';
-            filterBadge.innerHTML = `🔽 ${relatorioLojasSelecionadas.length} loja(s) selecionada(s)`;
+            filterBadge.style.display = "inline-flex";
+            const filtros = [];
+            if (relatorioLojasSelecionadas.length) filtros.push(relatorioLojasSelecionadas.length + " loja(s)");
+            if (relatorioGruposSelecionados.length) filtros.push(relatorioGruposSelecionados.length + " grupo(s)");
+            if (relatorioCompradoresSelecionados.length) filtros.push(relatorioCompradoresSelecionados.length + " comprador(es)");
+            filterBadge.innerHTML = "🔽 " + filtros.join(", ");
         }
-        
-        const produtosUnicos = [...new Set(dadosFiltrados.map(p => p.codigo))].length;
-        const totalRuptura = dadosFiltrados.filter(p => p.ruptura === 'RUPTURA').length;
-        const totalSemEstoque = dadosFiltrados.filter(p => p.estqLoja === 0).length;
-        const valorTotal = dadosFiltrados.reduce((s, p) => s + p.valorEstoque, 0);
         
         if (cardsDiv) {
             cardsDiv.innerHTML = `
-                <div class="card"><div class="card-title">📦 PRODUTOS</div><div class="card-value">${dadosFiltrados.length.toLocaleString()}</div></div>
-                <div class="card"><div class="card-title">🆔 PRODUTOS ÚNICOS</div><div class="card-value">${produtosUnicos.toLocaleString()}</div></div>
-                <div class="card"><div class="card-title">🏪 LOJAS</div><div class="card-value">${relatorioLojasSelecionadas.length}</div></div>
-                <div class="card"><div class="card-title">⚠️ % RUPTURA</div><div class="card-value">${produtosUnicos > 0 ? ((totalRuptura / produtosUnicos) * 100).toFixed(1) : 0}%</div></div>
-                <div class="card"><div class="card-title">⚠️ EM RUPTURA</div><div class="card-value">${totalRuptura.toLocaleString()}</div></div>
-                <div class="card"><div class="card-title">✅ COM ESTOQUE</div><div class="card-value">${(produtosUnicos - totalSemEstoque).toLocaleString()}</div></div>
-                <div class="card"><div class="card-title">📦 SEM ESTOQUE</div><div class="card-value">${totalSemEstoque.toLocaleString()}</div></div>
-                <div class="card"><div class="card-title">💰 VALOR TOTAL</div><div class="card-value">R$ ${formatarNumeroBR(valorTotal)}</div></div>
+                <div class="card"><div class="card-title">📦 PRODUTOS</div><div class="card-value">${(resumo.totalRegistros || 0).toLocaleString()}</div></div>
+                <div class="card"><div class="card-title">🆔 PRODUTOS UNICOS</div><div class="card-value">${(resumo.totalProdutosUnicos || 0).toLocaleString()}</div></div>
+                <div class="card"><div class="card-title">🏪 LOJAS</div><div class="card-value">${(resumo.totalLojas || 0).toLocaleString()}</div></div>
+                <div class="card"><div class="card-title">⚠️ % RUPTURA</div><div class="card-value">${(resumo.totalRuptura > 0 && resumo.totalProdutosUnicos > 0 ? ((resumo.totalRuptura / resumo.totalProdutosUnicos) * 100).toFixed(1) : 0)}%</div></div>
+                <div class="card"><div class="card-title">⚠️ EM RUPTURA</div><div class="card-value">${(resumo.totalRuptura || 0).toLocaleString()}</div></div>
+                <div class="card"><div class="card-title">💰 VALOR TOTAL</div><div class="card-value">R$ ${formatarNumeroBR(resumo.valorTotal || 0)}</div></div>
             `;
         }
-        
-        const porLoja = {};
-        for (const loja of relatorioLojasSelecionadas) {
-            const pl = dadosFiltrados.filter(p => p.loja === loja);
-            porLoja[loja] = {
-                produtos: pl.length,
-                ruptura: pl.filter(p => p.ruptura === 'RUPTURA').length,
-                valor: pl.reduce((s, p) => s + p.valorEstoque, 0)
-            };
-        }
-        
-        if (resumoLojasDiv) {
-            let html = '<div class="preview-header"><h4><i class="fas fa-store"></i> Ruptura por Loja (Filtrado)</h4></div><div class="preview-content"><pre>';
-            html += 'LOJA                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n';
-            html += '----------------------------------  ----------  ----------  -----  ------------------\n';
-            
-            for (const [loja, dados] of Object.entries(porLoja)) {
-                const nome = String(loja).slice(0, 34).padEnd(34);
-                const produtos = String(dados.produtos || 0).padStart(10);
-                const ruptura = String(dados.ruptura || 0).padStart(10);
-                const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
-                const valor = ('R$ ' + formatarNumeroBR(dados.valor || 0)).padStart(18);
-                html += `${nome}  ${produtos}  ${ruptura}  ${String(percentual).padStart(5)}%  ${valor}\n`;
-            }
-            html += '</pre></div>';
-            resumoLojasDiv.innerHTML = html;
-        }
     } else {
-        if (filterBadge) filterBadge.style.display = 'none';
+        if (filterBadge) filterBadge.style.display = "none";
         const stats = relatorioProcessor.estatisticas || {};
         if (cardsDiv) {
             cardsDiv.innerHTML = `
                 <div class="card"><div class="card-title">📦 PRODUTOS</div><div class="card-value">${(stats.totalRegistros || 0).toLocaleString()}</div></div>
-                <div class="card"><div class="card-title">🆔 PRODUTOS ÚNICOS</div><div class="card-value">${(stats.totalProdutosUnicos || 0).toLocaleString()}</div></div>
+                <div class="card"><div class="card-title">🆔 PRODUTOS UNICOS</div><div class="card-value">${(stats.totalProdutosUnicos || 0).toLocaleString()}</div></div>
                 <div class="card"><div class="card-title">🏪 LOJAS</div><div class="card-value">${(stats.totalLojas || 0).toLocaleString()}</div></div>
                 <div class="card"><div class="card-title">⚠️ % RUPTURA</div><div class="card-value">${(stats.percentualRuptura || 0).toFixed(1)}%</div></div>
                 <div class="card"><div class="card-title">⚠️ EM RUPTURA</div><div class="card-value">${(stats.totalRuptura || 0).toLocaleString()}</div></div>
@@ -386,93 +415,167 @@ function atualizarPreviewRelatorioFiltrado() {
                 <div class="card"><div class="card-title">💰 VALOR TOTAL</div><div class="card-value">R$ ${formatarNumeroBR(stats.valorTotal || 0)}</div></div>
             `;
         }
-        
-        if (resumoLojasDiv && stats.porLoja) {
-            let html = '<div class="preview-header"><h4><i class="fas fa-store"></i> Ruptura por Loja</h4></div><div class="preview-content"><pre>';
-            html += 'LOJA                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n';
-            html += '----------------------------------  ----------  ----------  -----  ------------------\n';
-            
-            const lojasOrdenadas = Object.entries(stats.porLoja).sort((a, b) => b[1].valor - a[1].valor);
-            for (const [loja, dados] of lojasOrdenadas) {
-                const nome = String(loja).slice(0, 34).padEnd(34);
-                const produtos = String(dados.produtos || 0).padStart(10);
-                const ruptura = String(dados.ruptura || 0).padStart(10);
-                const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
-                const valor = ('R$ ' + formatarNumeroBR(dados.valor || 0)).padStart(18);
-                html += `${nome}  ${produtos}  ${ruptura}  ${String(percentual).padStart(5)}%  ${valor}\n`;
-            }
-            html += '</pre></div>';
-            resumoLojasDiv.innerHTML = html;
-        }
     }
     
     if (previewContent) {
-        previewContent.innerHTML = `<pre>${formatarPreviewRelatorio((dadosFiltrados || []).slice(0, 20))}</pre>`;
+        previewContent.innerHTML = "<pre>" + formatarPreviewRelatorio((dadosFiltrados || []).slice(0, 20)) + "</pre>";
+    }
+    
+    // Atualizar resumos
+    if (resumoLojasDiv && resumo.porLoja) {
+        let html = '<div class="preview-header"><h4><i class="fas fa-store"></i> Ruptura por Loja</h4></div><div class="preview-content"><pre>';
+        html += "LOJA                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
+        html += "----------------------------------  ----------  ----------  -----  ------------------\n";
+        
+        const lojasOrdenadas = Object.entries(resumo.porLoja).sort((a, b) => b[1].valor - a[1].valor);
+        for (const [loja, dados] of lojasOrdenadas) {
+            const nome = String(loja).slice(0, 34).padEnd(34);
+            const produtos = String(dados.produtos || 0).padStart(10);
+            const ruptura = String(dados.ruptura || 0).padStart(10);
+            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
+            html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
+        }
+        html += "</pre></div>";
+        resumoLojasDiv.innerHTML = html;
+    }
+    
+    if (resumoGruposDiv && resumo.porGrupo) {
+        let html = '<div class="preview-header"><h4><i class="fas fa-folder"></i> Ruptura por Grupo</h4></div><div class="preview-content"><pre>';
+        html += "GRUPO                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
+        html += "----------------------------------  ----------  ----------  -----  ------------------\n";
+        
+        const gruposOrdenados = Object.entries(resumo.porGrupo).sort((a, b) => b[1].valor - a[1].valor);
+        for (const [grupo, dados] of gruposOrdenados) {
+            const nome = String(grupo).slice(0, 34).padEnd(34);
+            const produtos = String(dados.produtos || 0).padStart(10);
+            const ruptura = String(dados.ruptura || 0).padStart(10);
+            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
+            html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
+        }
+        html += "</pre></div>";
+        resumoGruposDiv.innerHTML = html;
+    }
+    
+    if (resumoCompradoresDiv && resumo.porComprador) {
+        let html = '<div class="preview-header"><h4><i class="fas fa-users"></i> Ruptura por Comprador</h4></div><div class="preview-content"><pre>';
+        html += "COMPRADOR                          PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
+        html += "----------------------------------  ----------  ----------  -----  ------------------\n";
+        
+        const compradoresOrdenados = Object.entries(resumo.porComprador).sort((a, b) => b[1].valor - a[1].valor);
+        for (const [comprador, dados] of compradoresOrdenados) {
+            const nome = String(comprador).slice(0, 34).padEnd(34);
+            const produtos = String(dados.produtos || 0).padStart(10);
+            const ruptura = String(dados.ruptura || 0).padStart(10);
+            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
+            html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
+        }
+        html += "</pre></div>";
+        resumoCompradoresDiv.innerHTML = html;
     }
 }
 
 function abrirFiltroRelatorio() {
-    if (!relatorioLojasDisponiveis.length) {
-        showToast('Nenhuma loja disponível', 'error');
-        return;
-    }
-    
-    const lojasOrdenadas = [...relatorioLojasDisponiveis].sort();
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal active';
-    modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; display:flex; align-items:center; justify-content:center;';
+    const modal = document.createElement("div");
+    modal.className = "modal active";
+    modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; display:flex; align-items:center; justify-content:center;";
     
     modal.innerHTML = `
-        <div class="modal-content" style="background:#2d2d2d; border-radius:16px; width:500px; max-width:90%; max-height:80vh; display:flex; flex-direction:column;">
+        <div class="modal-content" style="background:#2d2d2d; border-radius:16px; width:600px; max-width:90%; max-height:85vh; display:flex; flex-direction:column;">
             <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:15px 20px; border-bottom:1px solid #404040;">
-                <h3 style="color:#ffffff; margin:0;"><i class="fas fa-filter"></i> Filtrar por Lojas</h3>
+                <h3 style="color:#ffffff; margin:0;"><i class="fas fa-filter"></i> Filtrar Relatorio</h3>
                 <button class="modal-close" style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;">&times;</button>
             </div>
             <div class="modal-body" style="flex:1; overflow-y:auto; padding:20px;">
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <button id="selectAllLojas" style="flex:1; background:#3d3d3d; border:none; border-radius:8px; color:white; padding:10px; cursor:pointer;">Selecionar Todos</button>
-                    <button id="clearAllLojas" style="flex:1; background:#3d3d3d; border:none; border-radius:8px; color:white; padding:10px; cursor:pointer;">Limpar Todos</button>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color:#ffd43b; margin-bottom: 10px;">🏪 LOJAS</h4>
+                    <div id="filtroLojasList" style="max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px;"></div>
                 </div>
-                <div id="lojasList" style="max-height: 400px; overflow-y: auto;"></div>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color:#ffd43b; margin-bottom: 10px;">📂 GRUPOS</h4>
+                    <div id="filtroGruposList" style="max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px;"></div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color:#ffd43b; margin-bottom: 10px;">👥 COMPRADORES</h4>
+                    <div id="filtroCompradoresList" style="max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px;"></div>
+                </div>
             </div>
             <div class="modal-footer" style="display: flex; gap: 10px; padding: 15px 20px; border-top: 1px solid #404040;">
-                <button id="cancelLojasBtn" style="flex:1; background:#666666; border:none; border-radius:8px; color:white; font-weight:bold; padding:12px; cursor:pointer;">Cancelar</button>
-                <button id="applyLojasBtn" style="flex:1; background:#8b0000; border:none; border-radius:8px; color:white; font-weight:bold; padding:12px; cursor:pointer;">Aplicar</button>
+                <button id="limparFiltrosBtn" style="flex:1; background:#666666; border:none; border-radius:8px; color:white; font-weight:bold; padding:12px; cursor:pointer;">Limpar Filtros</button>
+                <button id="cancelFiltroBtn" style="flex:1; background:#666666; border:none; border-radius:8px; color:white; font-weight:bold; padding:12px; cursor:pointer;">Cancelar</button>
+                <button id="aplicarFiltroBtn" style="flex:1; background:#8b0000; border:none; border-radius:8px; color:white; font-weight:bold; padding:12px; cursor:pointer;">Aplicar</button>
             </div>
         </div>
     `;
     
     document.body.appendChild(modal);
     
-    const lojasDiv = document.getElementById('lojasList');
-    lojasOrdenadas.forEach(loja => {
-        const checked = relatorioLojasSelecionadas.includes(loja) ? 'checked' : '';
+    // Preencher lojas
+    const lojasDiv = document.getElementById("filtroLojasList");
+    relatorioLojasDisponiveis.sort().forEach(loja => {
+        const checked = relatorioLojasSelecionadas.includes(loja) ? "checked" : "";
         lojasDiv.innerHTML += `
-            <label style="display:flex; align-items:center; padding:8px; cursor:pointer; border-radius:8px; margin-bottom:4px; background: rgba(255,255,255,0.03);">
-                <input type="checkbox" value="${loja.replace(/"/g, '&quot;')}" ${checked} style="margin-right:10px; width:18px; height:18px;">
-                <span style="font-size:13px; color:#ffffff;">${loja}</span>
+            <label style="display:flex; align-items:center; padding:6px; cursor:pointer; border-radius:6px; margin-bottom:2px;">
+                <input type="checkbox" value="${loja.replace(/"/g, "&quot;")}" ${checked} style="margin-right:10px;">
+                <span style="font-size:12px;">${loja}</span>
             </label>
         `;
     });
     
-    document.getElementById('selectAllLojas').onclick = () => document.querySelectorAll('#lojasList input[type="checkbox"]').forEach(cb => cb.checked = true);
-    document.getElementById('clearAllLojas').onclick = () => document.querySelectorAll('#lojasList input[type="checkbox"]').forEach(cb => cb.checked = false);
-    document.getElementById('applyLojasBtn').onclick = () => {
-        relatorioLojasSelecionadas = Array.from(document.querySelectorAll('#lojasList input[type="checkbox"]:checked')).map(cb => cb.value);
-        atualizarPreviewRelatorioFiltrado();
-        modal.remove();
-        showToast(`${relatorioLojasSelecionadas.length} loja(s) selecionada(s)`, 'success');
+    // Preencher grupos
+    const gruposDiv = document.getElementById("filtroGruposList");
+    relatorioGruposDisponiveis.sort().forEach(grupo => {
+        const checked = relatorioGruposSelecionados.includes(grupo) ? "checked" : "";
+        gruposDiv.innerHTML += `
+            <label style="display:flex; align-items:center; padding:6px; cursor:pointer; border-radius:6px; margin-bottom:2px;">
+                <input type="checkbox" value="${grupo.replace(/"/g, "&quot;")}" ${checked} style="margin-right:10px;">
+                <span style="font-size:12px;">${grupo}</span>
+            </label>
+        `;
+    });
+    
+    // Preencher compradores
+    const compradoresDiv = document.getElementById("filtroCompradoresList");
+    relatorioCompradoresDisponiveis.sort().forEach(comprador => {
+        const checked = relatorioCompradoresSelecionados.includes(comprador) ? "checked" : "";
+        compradoresDiv.innerHTML += `
+            <label style="display:flex; align-items:center; padding:6px; cursor:pointer; border-radius:6px; margin-bottom:2px;">
+                <input type="checkbox" value="${comprador.replace(/"/g, "&quot;")}" ${checked} style="margin-right:10px;">
+                <span style="font-size:12px;">${comprador}</span>
+            </label>
+        `;
+    });
+    
+    const closeModal = () => modal.remove();
+    modal.querySelector(".modal-close").onclick = closeModal;
+    document.getElementById("cancelFiltroBtn").onclick = closeModal;
+    
+    document.getElementById("limparFiltrosBtn").onclick = () => {
+        document.querySelectorAll("#filtroLojasList input, #filtroGruposList input, #filtroCompradoresList input").forEach(cb => cb.checked = false);
     };
-    document.getElementById('cancelLojasBtn').onclick = () => modal.remove();
-    modal.querySelector('.modal-close').onclick = () => modal.remove();
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    document.getElementById("aplicarFiltroBtn").onclick = () => {
+        relatorioLojasSelecionadas = Array.from(document.querySelectorAll("#filtroLojasList input:checked")).map(cb => cb.value);
+        relatorioGruposSelecionados = Array.from(document.querySelectorAll("#filtroGruposList input:checked")).map(cb => cb.value);
+        relatorioCompradoresSelecionados = Array.from(document.querySelectorAll("#filtroCompradoresList input:checked")).map(cb => cb.value);
+        atualizarPreviewRelatorioFiltrado();
+        closeModal();
+        let msg = "";
+        if (relatorioLojasSelecionadas.length) msg += relatorioLojasSelecionadas.length + " loja(s) ";
+        if (relatorioGruposSelecionados.length) msg += relatorioGruposSelecionados.length + " grupo(s) ";
+        if (relatorioCompradoresSelecionados.length) msg += relatorioCompradoresSelecionados.length + " comprador(es) ";
+        showToast("✅ Filtro aplicado: " + msg, "success");
+    };
+    
+    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
 }
 
 function confirmarVarredura() {
-    const modal = document.createElement('div');
-    modal.className = 'modal active';
-    modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; display:flex; align-items:center; justify-content:center;';
+    const modal = document.createElement("div");
+    modal.className = "modal active";
+    modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; display:flex; align-items:center; justify-content:center;";
     
     modal.innerHTML = `
         <div class="modal-content" style="background:#2d2d2d; border-radius:16px; width:450px; max-width:90%;">
@@ -481,11 +584,11 @@ function confirmarVarredura() {
                 <button class="modal-close" style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;">&times;</button>
             </div>
             <div class="modal-body" style="padding:20px;">
-                <p>Esta operação irá remover:</p>
+                <p>Esta operacao ira remover:</p>
                 <ul>
                     <li>Linhas da loja "COMCARNE MATRIZ SAO LUIS"</li>
-                    <li>Produtos que começam com "NC"</li>
-                    <li>Produtos com ESTQ LOJA = 0, VENDAS = 0 e MÉDIA = 0</li>
+                    <li>Produtos que comecam com "NC"</li>
+                    <li>Produtos com ESTQ LOJA = 0, VENDAS = 0 e MEDIA = 0</li>
                 </ul>
                 <p><strong>Deseja continuar?</strong></p>
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
@@ -499,86 +602,89 @@ function confirmarVarredura() {
     document.body.appendChild(modal);
     
     const closeModal = () => modal.remove();
-    modal.querySelector('.modal-close').onclick = closeModal;
-    document.getElementById('cancelBtn').onclick = closeModal;
+    modal.querySelector(".modal-close").onclick = closeModal;
+    document.getElementById("cancelBtn").onclick = closeModal;
     
-    document.getElementById('confirmBtn').onclick = () => {
-        console.log('🧹 Executando varredura...');
+    document.getElementById("confirmBtn").onclick = () => {
         const dadosVarridos = relatorioProcessor.varrerRelatorio();
         relatorioDadosAtuais = dadosVarridos;
-        
         mostrarResultadoRelatorio({ 
             dados: dadosVarridos, 
             estatisticas: relatorioProcessor.estatisticas, 
             lojas: relatorioProcessor.lojas 
         });
-        
         closeModal();
-        showToast('✅ Varredura concluída!', 'success');
+        showToast("✅ Varredura concluida!", "success");
     };
     modal.onclick = (e) => { if (e.target === modal) closeModal(); };
 }
 
 function exportarRelatorio() {
     if (!relatorioDadosAtuais || !relatorioDadosAtuais.length) {
-        showToast('Nenhum dado para exportar', 'error');
+        showToast("Nenhum dado para exportar", "error");
         return;
     }
     
-    if (typeof XLSX === 'undefined') {
-        showToast('Biblioteca XLSX não carregada.', 'error');
+    if (typeof XLSX === "undefined") {
+        showToast("Biblioteca XLSX nao carregada.", "error");
         return;
     }
     
     try {
         const workbook = relatorioProcessor.exportarParaExcel(
-            relatorioLojasSelecionadas.length ? relatorioLojasSelecionadas : null
+            relatorioLojasSelecionadas.length ? relatorioLojasSelecionadas : null,
+            relatorioGruposSelecionados.length ? relatorioGruposSelecionados : null,
+            relatorioCompradoresSelecionados.length ? relatorioCompradoresSelecionados : null
         );
-        const nomeArquivo = `Relatorio_Ruptura_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`;
+        const nomeArquivo = "Relatorio_Ruptura_" + new Date().toISOString().slice(0,19).replace(/:/g, "-") + ".xlsx";
         XLSX.writeFile(workbook, nomeArquivo);
-        showToast(`✅ Arquivo exportado!`, 'success');
+        showToast("✅ Arquivo exportado!", "success");
     } catch (error) {
         console.error(error);
-        showToast('❌ Erro ao exportar: ' + error.message, 'error');
+        showToast("❌ Erro ao exportar: " + error.message, "error");
     }
 }
 
 function limparRelatorio() {
     relatorioDadosAtuais = null;
     relatorioLojasDisponiveis = [];
+    relatorioGruposDisponiveis = [];
+    relatorioCompradoresDisponiveis = [];
     relatorioLojasSelecionadas = [];
+    relatorioGruposSelecionados = [];
+    relatorioCompradoresSelecionados = [];
     relatorioArquivoEstoque = null;
     relatorioArquivoCurva = null;
     relatorioProcessado = false;
     
-    const resultadoArea = document.getElementById('resultadoAreaRelatorio');
-    if (resultadoArea) resultadoArea.style.display = 'none';
+    const resultadoArea = document.getElementById("resultadoAreaRelatorio");
+    if (resultadoArea) resultadoArea.style.display = "none";
     
-    const btnFiltrar = document.getElementById('btnFiltrarRelatorio');
-    const btnVarrer = document.getElementById('btnVarrerRelatorio');
-    const btnExportar = document.getElementById('btnExportarRelatorio');
-    const btnLimpar = document.getElementById('btnLimparRelatorio');
+    const btnFiltrar = document.getElementById("btnFiltrarRelatorio");
+    const btnVarrer = document.getElementById("btnVarrerRelatorio");
+    const btnExportar = document.getElementById("btnExportarRelatorio");
+    const btnLimpar = document.getElementById("btnLimparRelatorio");
     
-    if (btnFiltrar) btnFiltrar.style.display = 'none';
-    if (btnVarrer) btnVarrer.style.display = 'none';
-    if (btnExportar) btnExportar.style.display = 'none';
-    if (btnLimpar) btnLimpar.style.display = 'none';
+    if (btnFiltrar) btnFiltrar.style.display = "none";
+    if (btnVarrer) btnVarrer.style.display = "none";
+    if (btnExportar) btnExportar.style.display = "none";
+    if (btnLimpar) btnLimpar.style.display = "none";
     
-    const nomeEstoqueSpan = document.getElementById('nomeArquivoEstoque');
-    const nomeCurvaSpan = document.getElementById('nomeArquivoCurva');
-    const statusSpan = document.getElementById('statusRelatorio');
+    const nomeEstoqueSpan = document.getElementById("nomeArquivoEstoque");
+    const nomeCurvaSpan = document.getElementById("nomeArquivoCurva");
+    const statusSpan = document.getElementById("statusRelatorio");
     
-    if (nomeEstoqueSpan) nomeEstoqueSpan.innerHTML = '';
-    if (nomeCurvaSpan) nomeCurvaSpan.innerHTML = '';
+    if (nomeEstoqueSpan) nomeEstoqueSpan.innerHTML = "";
+    if (nomeCurvaSpan) nomeCurvaSpan.innerHTML = "";
     if (statusSpan) {
-        statusSpan.innerHTML = 'Aguardando arquivos';
-        statusSpan.style.color = '';
+        statusSpan.innerHTML = "Aguardando arquivos";
+        statusSpan.style.color = "";
     }
     
-    const fileInputEstoque = document.getElementById('fileInputEstoque');
-    const fileInputCurva = document.getElementById('fileInputCurva');
-    if (fileInputEstoque) fileInputEstoque.value = '';
-    if (fileInputCurva) fileInputCurva.value = '';
+    const fileInputEstoque = document.getElementById("fileInputEstoque");
+    const fileInputCurva = document.getElementById("fileInputCurva");
+    if (fileInputEstoque) fileInputEstoque.value = "";
+    if (fileInputCurva) fileInputCurva.value = "";
     
-    showToast('Dados limpos!', 'info');
+    showToast("Dados limpos!", "info");
 }
