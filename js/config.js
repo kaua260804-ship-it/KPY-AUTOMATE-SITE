@@ -1,7 +1,7 @@
-// ========== CONFIGURAÇÕES DO SISTEMA ==========
+// ========== CONFIGURACOES DO SISTEMA ==========
 
 const CONFIG = {
-    VERSAO: '3.0.0',
+    VERSAO: "3.0.0",
     APP_NOME: "K'PY AUTOMATE",
     
     // Macros de lojas
