@@ -1,5 +1,4 @@
 // ========== PROCESSADOR DE RELATÓRIO DE RUPTURA ==========
-// Agora usando o curvaProcessor existente para processar a Curva ABC
 
 class RelatorioProcessor {
     constructor() {
@@ -8,77 +7,89 @@ class RelatorioProcessor {
         this.estatisticas = {};
         this.previewOriginal = "";
         this.ultimosFiltros = {};
-        console.log('🔧 RelatorioProcessor inicializado');
+        console.log("RelatorioProcessor inicializado");
     }
 
+    // Usar o mapa de compradores do config.js
     getComprador(grupo) {
+        if (typeof CONFIG !== "undefined" && CONFIG.COMPRADORES) {
+            return CONFIG.COMPRADORES[grupo] || "NAO MAPEADO";
+        }
+        
+        // Fallback (caso o config nao esteja disponivel)
         const MAPA_COMPRADORES = {
-            'QUEIJOS ESPECIAIS': 'Anderson',
-            'EMBUTIDOS/DEFUMADOS': 'Anderson',
-            'PRESUNTARIA/MORTADELA': 'Anderson',
-            'QUEIJOS COMODITIES': 'Anderson',
-            'MARGARINAS/MANTEIGAS': 'Anderson',
-            'REQUEIJAO/QUEIJOS CREMOSOS': 'Anderson',
-            'IOGURTES': 'Anderson',
-            'ANTEPASTOS/SOBREMESAS/APER': 'Anderson',
-            'MASSAS REFRIGERADAS': 'Anderson',
-            'BEBIDAS LACTEAS': 'Anderson',
-            'ARTIGOS CHURRASCO': 'Erilana',
-            'BAZAR': 'Erilana',
-            'BOMBONIERE': 'Erilana',
-            'MERCEARIA DOCE': 'Erilana',
-            'MATINAIS': 'Erilana',
-            'PLANTAS': 'Erilana',
-            'BEBIDAS NAO ALCOOLICAS': 'Andreia Silva',
-            'BEBIDAS ALCOOLICAS': 'Andreia Silva',
-            'SUPLEMENTOS NUTRICIONAIS': 'Andreia Silva',
-            'LIMPEZA': 'Marcelo',
-            'HIGIENE E PERFUMARIA': 'Marcelo',
-            'DESCARTAVEIS': 'Marcelo',
-            'DIANTEIRA C/ OSSO': 'Glacirene',
-            'DIANTEIRA S/ OSSO': 'Glacirene',
-            'TRASEIRA S/ OSSO': 'Glacirene',
-            'AVES': 'Glacirene',
-            'TRASEIRA C/ OSSO': 'Glacirene',
-            'INDUSTRIALIZADOS': 'Glacirene',
-            'MIUDOS': 'Glacirene',
-            'SUINOS': 'Glacirene',
-            'OVINOS': 'Glacirene',
-            'PEIXES / MARISCOS': 'Glacirene',
-            'FRUTAS': 'Joao',
-            'LEGUMES': 'Joao',
-            'VERDURAS': 'Joao',
-            'OVOS': 'Joao',
-            'CONGELADOS': 'Joseane',
-            'TEMPEROS/CONDIMENTOS': 'Joseane',
-            'CONSERVAS': 'Joseane',
-            'MASSAS': 'Joseane',
-            'MOLHOS/ATOMATADOS': 'Joseane',
-            'FRUTAS SECAS': 'Renato',
-            'ROTISSERIA': 'Renato',
-            'PADARIA': 'Renato',
-            'GERAL': 'Renato',
-            'DOCURAS': 'Renato'
+            "QUEIJOS ESPECIAIS": "Anderson",
+            "EMBUTIDOS/DEFUMADOS": "Anderson",
+            "PRESUNTARIA/MORTADELA": "Anderson",
+            "QUEIJOS COMODITIES": "Anderson",
+            "MARGARINAS/MANTEIGAS": "Anderson",
+            "REQUEIJAO/QUEIJOS CREMOSOS": "Anderson",
+            "IOGURTES": "Anderson",
+            "ANTEPASTOS/SOBREMESAS/APER": "Anderson",
+            "MASSAS REFRIGERADAS": "Anderson",
+            "BEBIDAS LACTEAS": "Anderson",
+            "ARTIGOS CHURRASCO": "Erilana",
+            "BAZAR": "Erilana",
+            "PLANTAS": "Erilana",
+            "BOMBONIERE": "Joseane",
+            "MERCEARIA DOCE": "Joseane",
+            "MATINAIS": "Joseane",
+            "CONGELADOS": "Joseane",
+            "BEBIDAS NAO ALCOOLICAS": "Andreia Silva",
+            "BEBIDAS ALCOOLICAS": "Andreia Silva",
+            "SUPLEMENTOS NUTRICIONAIS": "Andreia Silva",
+            "LIMPEZA": "Marcelo",
+            "HIGIENE E PERFUMARIA": "Marcelo",
+            "DESCARTAVEIS": "Marcelo",
+            "APERITIVOS/SALGADINHOS": "Marcelo",
+            "DIANTEIRA C/ OSSO": "Glacirene",
+            "DIANTEIRA S/ OSSO": "Glacirene",
+            "TRASEIRA S/ OSSO": "Glacirene",
+            "AVES": "Glacirene",
+            "TRASEIRA C/ OSSO": "Glacirene",
+            "INDUSTRIALIZADOS": "Glacirene",
+            "MIUDOS": "Glacirene",
+            "SUINOS": "Glacirene",
+            "OVINOS": "Glacirene",
+            "PEIXES / MARISCOS": "Glacirene",
+            "FRUTAS": "Joao",
+            "LEGUMES": "Joao",
+            "VERDURAS": "Joao",
+            "OVOS": "Joao",
+            "TEMPEROS/CONDIMENTOS": "Wendell",
+            "CONSERVAS": "Wendell",
+            "MASSAS": "Wendell",
+            "MOLHOS/ATOMATADOS": "Wendell",
+            "AZEITES/OLEOS": "Wendell",
+            "FARINACEOS/FERMENTOS": "Wendell",
+            "GRAOS": "Wendell",
+            "FRUTAS SECAS": "Jhonatan",
+            "ROTISSERIA": "Jhonatan",
+            "PADARIA": "Jhonatan",
+            "GERAL": "Jhonatan",
+            "DOCURAS": "Jhonatan",
+            "BACALHAU": "Jhonatan",
+            "PADARIA INDUSTRIALIZADO": "Jhonatan"
         };
-        return MAPA_COMPRADORES[grupo] || 'NÃO MAPEADO';
+        return MAPA_COMPRADORES[grupo] || "NAO MAPEADO";
     }
 
     normalizarCodigo(codigo) {
-        if (!codigo) return '';
-        return String(codigo).split('.')[0].replace(/^0+/, '');
+        if (!codigo) return "";
+        return String(codigo).split(".")[0].replace(/^0+/, "");
     }
 
     normalizarLoja(loja) {
-        if (!loja) return '';
+        if (!loja) return "";
         return String(loja).trim().toUpperCase();
     }
 
     converterNumeroBR(valor) {
         if (valor === undefined || valor === null) return 0;
-        if (typeof valor === 'number') return valor;
+        if (typeof valor === "number") return valor;
         let str = String(valor).trim();
-        if (str === '') return 0;
-        str = str.replace(/\./g, '').replace(/,/g, '.');
+        if (str === "") return 0;
+        str = str.replace(/\./g, "").replace(/,/g, ".");
         const num = parseFloat(str);
         return isNaN(num) ? 0 : num;
     }
@@ -94,9 +105,9 @@ class RelatorioProcessor {
         const dias = (estq / med) * 30;
         if (dias >= 30) {
             const meses = Math.floor(dias / 30);
-            return `${meses} mês(es)`;
+            return meses + " mes(es)";
         }
-        return `${Math.floor(dias)} dia(s)`;
+        return Math.floor(dias) + " dia(s)";
     }
 
     statusEstoque(estqLoja, estqMatriz) {
@@ -104,7 +115,7 @@ class RelatorioProcessor {
         const estqM = parseFloat(estqMatriz) || 0;
         const statusLoja = estqL > 0 ? "C/ESTQ LJ" : "S/ESTQ LJ";
         const statusMatriz = estqM > 0 ? "C/ESTQ MTZ" : "S/ESTQ MTZ";
-        return `${statusLoja} ${statusMatriz}`;
+        return statusLoja + " " + statusMatriz;
     }
 
     statusVenda(vendas) {
@@ -126,7 +137,7 @@ class RelatorioProcessor {
             reader.onload = (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    const workbook = XLSX.read(data, { type: "array" });
                     const primeiraPlanilha = workbook.Sheets[workbook.SheetNames[0]];
                     const dadosRaw = XLSX.utils.sheet_to_json(primeiraPlanilha, { header: 1, defval: "" });
                     const resultado = this._processarEstoque(dadosRaw, basePrecos);
@@ -135,13 +146,13 @@ class RelatorioProcessor {
                     reject(error);
                 }
             };
-            reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+            reader.onerror = () => reject(new Error("Erro ao ler arquivo"));
             reader.readAsArrayBuffer(file);
         });
     }
 
     _processarEstoque(dadosRaw, basePrecos) {
-        console.log('📊 Processando Estoque...');
+        console.log("Processando Estoque...");
         
         let linhaCabecalho = -1;
         let colunas = {
@@ -153,18 +164,18 @@ class RelatorioProcessor {
             const linha = dadosRaw[i];
             if (!linha) continue;
             for (let j = 0; j < linha.length; j++) {
-                const celula = String(linha[j] || '').toLowerCase().trim();
-                if (celula === 'código' || celula === 'codigo') {
+                const celula = String(linha[j] || "").toLowerCase().trim();
+                if (celula === "código" || celula === "codigo") {
                     linhaCabecalho = i;
                     colunas.codigo = j;
                 }
-                if (celula === 'descrição' || celula === 'produto') colunas.produto = j;
-                if (celula === 'estoque loja') colunas.estoqueLoja = j;
-                if (celula === 'loja') colunas.loja = j;
-                if (celula === 'categoria') colunas.categoria = j;
-                if (celula === 'grupo') colunas.grupo = j;
-                if (celula === 'sub-grupo' || celula === 'subgrupo') colunas.subgrupo = j;
-                if (celula === 'fornec/razão social' || celula === 'fornecedor_razao') colunas.fornecedor = j;
+                if (celula === "descrição" || celula === "produto") colunas.produto = j;
+                if (celula === "estoque loja") colunas.estoqueLoja = j;
+                if (celula === "loja") colunas.loja = j;
+                if (celula === "categoria") colunas.categoria = j;
+                if (celula === "grupo") colunas.grupo = j;
+                if (celula === "sub-grupo" || celula === "subgrupo") colunas.subgrupo = j;
+                if (celula === "fornec/razão social" || celula === "fornecedor_razao") colunas.fornecedor = j;
             }
             if (linhaCabecalho !== -1 && colunas.codigo !== -1) break;
         }
@@ -182,19 +193,19 @@ class RelatorioProcessor {
             const linha = dadosRaw[i];
             if (!linha) continue;
             
-            let codigo = '';
+            let codigo = "";
             if (colunas.codigo !== -1 && linha[colunas.codigo]) {
                 codigo = this.normalizarCodigo(linha[colunas.codigo]);
             }
             if (!codigo || isNaN(parseInt(codigo))) continue;
             
-            const produto = colunas.produto !== -1 ? (linha[colunas.produto] || '') : '';
+            const produto = colunas.produto !== -1 ? (linha[colunas.produto] || "") : "";
             const estoqueLoja = this.converterNumeroBR(linha[colunas.estoqueLoja]);
-            const loja = colunas.loja !== -1 ? this.normalizarLoja(linha[colunas.loja]) : '';
-            const categoria = colunas.categoria !== -1 ? (linha[colunas.categoria] || '') : '';
-            const grupo = colunas.grupo !== -1 ? (linha[colunas.grupo] || '') : '';
-            const subgrupo = colunas.subgrupo !== -1 ? (linha[colunas.subgrupo] || '') : '';
-            const fornecedor = colunas.fornecedor !== -1 ? (linha[colunas.fornecedor] || '') : '';
+            const loja = colunas.loja !== -1 ? this.normalizarLoja(linha[colunas.loja]) : "";
+            const categoria = colunas.categoria !== -1 ? (linha[colunas.categoria] || "") : "";
+            const grupo = colunas.grupo !== -1 ? (linha[colunas.grupo] || "") : "";
+            const subgrupo = colunas.subgrupo !== -1 ? (linha[colunas.subgrupo] || "") : "";
+            const fornecedor = colunas.fornecedor !== -1 ? (linha[colunas.fornecedor] || "") : "";
             
             produtos.push({
                 codigo: codigo,
@@ -208,26 +219,23 @@ class RelatorioProcessor {
                 fornecedor: fornecedor
             });
         }
-        console.log(`✅ Estoque processado: ${produtos.length} produtos`);
+        console.log("Estoque processado: " + produtos.length + " produtos");
         return produtos;
     }
 
-    // ========== PROCESSAMENTO DA CURVA ABC - USANDO O CURVAPROCESSOR EXISTENTE ==========
+    // ========== PROCESSAMENTO DA CURVA ABC ==========
     async processarCurva(file, basePrecos) {
-        console.log('📊 Processando Curva ABC via curvaProcessor...');
+        console.log("Processando Curva ABC via curvaProcessor...");
         
-        // Usar o curvaProcessor existente para processar o arquivo
         const resultado = await curvaProcessor.processarArquivo(file, basePrecos);
         
         if (!resultado || !resultado.dados) {
-            console.log('⚠️ Nenhum dado retornado do curvaProcessor');
+            console.log("Nenhum dado retornado do curvaProcessor");
             return [];
         }
         
-        // Extrair apenas as informações necessárias: código, loja e quantidade
         const vendas = [];
         for (const item of resultado.dados) {
-            // O curvaProcessor já tem os dados no formato correto
             const codigo = this.normalizarCodigo(item.codigo);
             const loja = this.normalizarLoja(item.loja);
             const qtd = parseFloat(item.qtd) || 0;
@@ -242,27 +250,26 @@ class RelatorioProcessor {
             }
         }
         
-        console.log(`✅ Curva ABC processada via curvaProcessor: ${vendas.length} registros de venda`);
+        console.log("Curva ABC processada: " + vendas.length + " registros de venda");
         
-        // Mostrar exemplo das primeiras vendas
         if (vendas.length > 0) {
-            console.log('📊 Primeiras 5 vendas:');
+            console.log("Primeiras 5 vendas:");
             vendas.slice(0, 5).forEach(v => {
-                console.log(`   Código: ${v.codigo}, Loja: ${v.loja}, Qtd: ${v.qtd}`);
+                console.log("   Codigo: " + v.codigo + ", Loja: " + v.loja + ", Qtd: " + v.qtd);
             });
         }
         
         return vendas;
     }
 
-    // ========== MÉDIA DE VENDAS ==========
+    // ========== MEDIA DE VENDAS ==========
     async carregarMediaVendas() {
         try {
             const caminhos = [
-                'data/media_vendas.xlsx',
-                '../data/media_vendas.xlsx',
-                './data/media_vendas.xlsx',
-                'media_vendas.xlsx'
+                "data/media_vendas.xlsx",
+                "../data/media_vendas.xlsx",
+                "./data/media_vendas.xlsx",
+                "media_vendas.xlsx"
             ];
             
             let response = null;
@@ -276,57 +283,54 @@ class RelatorioProcessor {
             }
             
             if (!response || !response.ok) {
-                console.log('⚠️ Arquivo media_vendas.xlsx não encontrado');
+                console.log("Arquivo media_vendas.xlsx nao encontrado");
                 return [];
             }
             
             const arrayBuffer = await response.arrayBuffer();
-            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const workbook = XLSX.read(arrayBuffer, { type: "array" });
             const primeiraPlanilha = workbook.Sheets[workbook.SheetNames[0]];
             const dados = XLSX.utils.sheet_to_json(primeiraPlanilha);
             
             const mediaVendas = dados.map(row => ({
-                codigo: this.normalizarCodigo(row['Código'] || row['CODIGO']),
-                loja: this.normalizarLoja(row['Loja'] || row['LOJA']),
-                qtd: parseFloat(row['Qtd'] || row['QTD'] || 0)
+                codigo: this.normalizarCodigo(row["Código"] || row["CODIGO"]),
+                loja: this.normalizarLoja(row["Loja"] || row["LOJA"]),
+                qtd: parseFloat(row["Qtd"] || row["QTD"] || 0)
             }));
             
-            console.log(`✅ Média de vendas carregada: ${mediaVendas.length} registros`);
+            console.log("Media de vendas carregada: " + mediaVendas.length + " registros");
             return mediaVendas;
         } catch (error) {
-            console.log('⚠️ Erro ao carregar média de vendas:', error);
+            console.log("Erro ao carregar media de vendas:", error);
             return [];
         }
     }
 
-    // ========== PROCESSAR RELATÓRIO COMPLETO ==========
+    // ========== PROCESSAR RELATORIO COMPLETO ==========
     async processarRelatorio(arquivoEstoque, arquivoCurva, basePrecos) {
-        console.log('📊 GERANDO RELATÓRIO DE RUPTURA');
+        console.log("GERANDO RELATORIO DE RUPTURA");
         
-        if (!arquivoEstoque) throw new Error('Arquivo de Estoque é obrigatório!');
-        if (!arquivoCurva) throw new Error('Arquivo de Curva ABC é obrigatório!');
+        if (!arquivoEstoque) throw new Error("Arquivo de Estoque e obrigatorio!");
+        if (!arquivoCurva) throw new Error("Arquivo de Curva ABC e obrigatorio!");
         
         const dadosEstoque = await this.processarEstoque(arquivoEstoque, basePrecos);
         const dadosCurva = await this.processarCurva(arquivoCurva, basePrecos);
         const dadosMedia = await this.carregarMediaVendas();
         
-        // Criar mapa de vendas
         const vendasMap = new Map();
         for (const venda of dadosCurva) {
-            const key = `${venda.codigo}|${venda.loja}`;
+            const key = venda.codigo + "|" + venda.loja;
             vendasMap.set(key, venda.qtd);
         }
-        console.log(`📊 Mapa de vendas criado com ${vendasMap.size} combinações código+loja`);
+        console.log("Mapa de vendas criado com " + vendasMap.size + " combinacoes");
         
-        // Criar mapa de média de vendas
         const mediaMap = new Map();
         for (const media of dadosMedia) {
-            const key = `${media.codigo}|${media.loja}`;
+            const key = media.codigo + "|" + media.loja;
             mediaMap.set(key, media.qtd);
         }
-        console.log(`📊 Mapa de média criado com ${mediaMap.size} combinações código+loja`);
+        console.log("Mapa de media criado com " + mediaMap.size + " combinacoes");
         
-        // Identificar matriz
         const nomeMatriz = "COMCARNE MATRIZ SAO LUIS";
         const matrizNormalizada = this.normalizarLoja(nomeMatriz);
         const estoqueMatriz = new Map();
@@ -335,21 +339,19 @@ class RelatorioProcessor {
                 estoqueMatriz.set(estq.codigo, estq.estoqueLoja);
             }
         }
-        console.log(`📊 Estoque matriz calculado para ${estoqueMatriz.size} produtos`);
+        console.log("Estoque matriz calculado para " + estoqueMatriz.size + " produtos");
         
-        // Combinar dados
         const resultados = [];
         let comVenda = 0;
         
         for (const estq of dadosEstoque) {
-            const key = `${estq.codigo}|${estq.loja}`;
+            const key = estq.codigo + "|" + estq.loja;
             const vendas = vendasMap.get(key) || 0;
             const media = mediaMap.get(key) || 0;
             const estoqueMatrizVal = estoqueMatriz.get(estq.codigo) || 0;
             
             if (vendas > 0) comVenda++;
             
-            // Buscar preço na base
             let precoBase = 0;
             const encontrado = basePrecos.find(p => p.codigo === estq.codigo || p.codigoInt === estq.codigoInt);
             if (encontrado) {
@@ -359,8 +361,8 @@ class RelatorioProcessor {
             resultados.push({
                 codigo: estq.codigoInt,
                 produto: estq.produto,
-                categoria: estq.categoria || 'NÃO MAPEADO',
-                grupo: estq.grupo || 'NÃO MAPEADO',
+                categoria: estq.categoria || "NAO MAPEADO",
+                grupo: estq.grupo || "NAO MAPEADO",
                 comprador: this.getComprador(estq.grupo),
                 estqLoja: estq.estoqueLoja,
                 estqMatriz: estoqueMatrizVal,
@@ -373,19 +375,19 @@ class RelatorioProcessor {
                 ruptura: this.statusRuptura(media, estq.estoqueLoja),
                 valorEstoque: precoBase * estq.estoqueLoja,
                 preco: precoBase,
-                subgrupo: estq.subgrupo || '',
-                forn: estq.fornecedor || ''
+                subgrupo: estq.subgrupo || "",
+                forn: estq.fornecedor || ""
             });
         }
         
-        console.log(`📊 Cadeamento: ${comVenda} produtos com venda, ${dadosEstoque.length - comVenda} sem venda`);
+        console.log("Cadeamento: " + comVenda + " produtos com venda, " + (dadosEstoque.length - comVenda) + " sem venda");
         
         this.dadosProcessados = resultados;
         this.lojas = [...new Set(resultados.map(r => r.loja))];
         
         this.atualizarEstatisticas();
         
-        console.log(`✅ Relatório gerado: ${resultados.length} linhas, ${this.lojas.length} lojas`);
+        console.log("Relatorio gerado: " + resultados.length + " linhas, " + this.lojas.length + " lojas");
         
         return {
             success: true,
@@ -399,7 +401,7 @@ class RelatorioProcessor {
         const resultados = this.dadosProcessados;
         if (!resultados) return;
         
-        const totalRuptura = resultados.filter(r => r.ruptura === 'RUPTURA').length;
+        const totalRuptura = resultados.filter(r => r.ruptura === "RUPTURA").length;
         const totalSemEstoque = resultados.filter(r => r.estqLoja === 0).length;
         const produtosUnicos = [...new Set(resultados.map(r => r.codigo))].length;
         
@@ -422,7 +424,7 @@ class RelatorioProcessor {
                 quantidade: pl.reduce((s, r) => s + r.estqLoja, 0),
                 valor: pl.reduce((s, r) => s + r.valorEstoque, 0),
                 produtos: pl.length,
-                ruptura: pl.filter(r => r.ruptura === 'RUPTURA').length
+                ruptura: pl.filter(r => r.ruptura === "RUPTURA").length
             };
         }
     }
@@ -445,14 +447,14 @@ class RelatorioProcessor {
         removidos += antesLoja - dados.length;
         
         const antesNC = dados.length;
-        dados = dados.filter(p => !p.produto.toUpperCase().startsWith('NC'));
+        dados = dados.filter(p => !p.produto.toUpperCase().startsWith("NC"));
         removidos += antesNC - dados.length;
         
         const antesZeros = dados.length;
         dados = dados.filter(p => !(p.estqLoja === 0 && p.vendas === 0 && p.mediaVendas === 0));
         removidos += antesZeros - dados.length;
         
-        console.log(`🧹 Varredura: ${removidos} linhas removidas`);
+        console.log("Varredura: " + removidos + " linhas removidas");
         
         this.dadosProcessados = dados;
         this.lojas = [...new Set(dados.map(p => p.loja))];
@@ -464,13 +466,13 @@ class RelatorioProcessor {
     getValoresUnicos() {
         if (!this.dadosProcessados) return {};
         return {
-            'LOJA': [...new Set(this.dadosProcessados.map(p => p.loja))].sort(),
-            'RUPTURA': [...new Set(this.dadosProcessados.map(p => p.ruptura))].sort(),
-            'STATUS DO ESTOQUE': [...new Set(this.dadosProcessados.map(p => p.statusEstoque))].sort(),
-            'CATEGORIA': [...new Set(this.dadosProcessados.map(p => p.categoria))].filter(c => c && c !== 'NÃO MAPEADO').sort(),
-            'GRUPO': [...new Set(this.dadosProcessados.map(p => p.grupo))].filter(g => g && g !== 'NÃO MAPEADO').sort(),
-            'VENDA': [...new Set(this.dadosProcessados.map(p => p.venda))].sort(),
-            'COMPRADOR': [...new Set(this.dadosProcessados.map(p => p.comprador))].filter(c => c !== 'NÃO MAPEADO').sort()
+            "LOJA": [...new Set(this.dadosProcessados.map(p => p.loja))].sort(),
+            "RUPTURA": [...new Set(this.dadosProcessados.map(p => p.ruptura))].sort(),
+            "STATUS DO ESTOQUE": [...new Set(this.dadosProcessados.map(p => p.statusEstoque))].sort(),
+            "CATEGORIA": [...new Set(this.dadosProcessados.map(p => p.categoria))].filter(c => c && c !== "NAO MAPEADO").sort(),
+            "GRUPO": [...new Set(this.dadosProcessados.map(p => p.grupo))].filter(g => g && g !== "NAO MAPEADO").sort(),
+            "VENDA": [...new Set(this.dadosProcessados.map(p => p.venda))].sort(),
+            "COMPRADOR": [...new Set(this.dadosProcessados.map(p => p.comprador))].filter(c => c !== "NAO MAPEADO").sort()
         };
     }
 
@@ -482,31 +484,31 @@ class RelatorioProcessor {
         }
         
         const planilha = dados.map(p => ({
-            'CATEGORIA': p.categoria,
-            'GRUPO': p.grupo,
-            'CÓDIGO': p.codigo,
-            'PRODUTO': p.produto,
-            'ESTQ LOJA': p.estqLoja,
-            'ESTQ MATRIZ': p.estqMatriz,
-            'VENDAS MÊS ATUAL': p.vendas,
-            'MÉDIA VENDA MENSAL': p.mediaVendas,
-            'DDE': p.dde,
-            'LOJA': p.loja,
-            'STATUS DO ESTOQUE': p.statusEstoque,
-            'VENDA': p.venda,
-            'COMPRADOR': p.comprador,
-            'RUPTURA': p.ruptura,
-            'VALOR ETQ': p.valorEstoque,
-            'Preço': p.preco,
-            'SUBGRUPO': p.subgrupo,
-            'FORN': p.forn
+            "CATEGORIA": p.categoria,
+            "GRUPO": p.grupo,
+            "CODIGO": p.codigo,
+            "PRODUTO": p.produto,
+            "ESTQ LOJA": p.estqLoja,
+            "ESTQ MATRIZ": p.estqMatriz,
+            "VENDAS MES ATUAL": p.vendas,
+            "MEDIA VENDA MENSAL": p.mediaVendas,
+            "DDE": p.dde,
+            "LOJA": p.loja,
+            "STATUS DO ESTOQUE": p.statusEstoque,
+            "VENDA": p.venda,
+            "COMPRADOR": p.comprador,
+            "RUPTURA": p.ruptura,
+            "VALOR ETQ": p.valorEstoque,
+            "Preco": p.preco,
+            "SUBGRUPO": p.subgrupo,
+            "FORN": p.forn
         }));
         
         const workbook = XLSX.utils.book_new();
         const worksheet = XLSX.utils.json_to_sheet(planilha);
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Ruptura');
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Ruptura");
         
-        worksheet['!cols'] = [
+        worksheet["!cols"] = [
             { wch: 25 }, { wch: 30 }, { wch: 10 }, { wch: 50 },
             { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 15 },
             { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 10 },
@@ -519,4 +521,4 @@ class RelatorioProcessor {
 }
 
 const relatorioProcessor = new RelatorioProcessor();
-console.log('✅ RelatorioProcessor carregado e instanciado');
+console.log("RelatorioProcessor carregado e instanciado");
