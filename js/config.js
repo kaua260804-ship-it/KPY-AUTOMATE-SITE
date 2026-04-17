@@ -17,68 +17,85 @@ const CONFIG = {
     
     // Mapeamento de compradores por grupo
     COMPRADORES: {
-        'QUEIJOS ESPECIAIS': 'Anderson',
-        'EMBUTIDOS/DEFUMADOS': 'Anderson',
-        'PRESUNTARIA/MORTADELA': 'Anderson',
-        'QUEIJOS COMODITIES': 'Anderson',
-        'MARGARINAS/MANTEIGAS': 'Anderson',
-        'REQUEIJAO/QUEIJOS CREMOSOS': 'Anderson',
-        'IOGURTES': 'Anderson',
-        'ANTEPASTOS/SOBREMESAS/APER': 'Anderson',
-        'MASSAS REFRIGERADAS': 'Anderson',
-        'BEBIDAS LACTEAS': 'Anderson',
-        'ARTIGOS CHURRASCO': 'Erilana',
-        'BAZAR': 'Erilana',
-        'BOMBONIERE': 'Erilana',
-        'MERCEARIA DOCE': 'Erilana',
-        'MATINAIS': 'Erilana',
-        'PLANTAS': 'Erilana',
-        'BEBIDAS NAO ALCOOLICAS': 'Andreia Silva',
-        'BEBIDAS ALCOOLICAS': 'Andreia Silva',
-        'SUPLEMENTOS NUTRICIONAIS': 'Andreia Silva',
-        'LIMPEZA': 'Marcelo',
-        'HIGIENE E PERFUMARIA': 'Marcelo',
-        'DESCARTAVEIS': 'Marcelo',
-        'DIANTEIRA C/ OSSO': 'Glacirene',
-        'DIANTEIRA S/ OSSO': 'Glacirene',
-        'TRASEIRA S/ OSSO': 'Glacirene',
-        'AVES': 'Glacirene',
-        'TRASEIRA C/ OSSO': 'Glacirene',
-        'INDUSTRIALIZADOS': 'Glacirene',
-        'MIUDOS': 'Glacirene',
-        'SUINOS': 'Glacirene',
-        'OVINOS': 'Glacirene',
-        'PEIXES / MARISCOS': 'Glacirene',
-        'FRUTAS': 'Joao',
-        'LEGUMES': 'Joao',
-        'VERDURAS': 'Joao',
-        'OVOS': 'Joao',
-        'CONGELADOS': 'Joseane',
-        'TEMPEROS/CONDIMENTOS': 'Joseane',
-        'CONSERVAS': 'Joseane',
-        'MASSAS': 'Joseane',
-        'MOLHOS/ATOMATADOS': 'Joseane',
-        'FRUTAS SECAS': 'Renato',
-        'ROTISSERIA': 'Renato',
-        'PADARIA': 'Renato',
-        'GERAL': 'Renato',
-        'DOCURAS': 'Renato'
+        // Anderson
+        "QUEIJOS ESPECIAIS": "Anderson",
+        "EMBUTIDOS/DEFUMADOS": "Anderson",
+        "PRESUNTARIA/MORTADELA": "Anderson",
+        "QUEIJOS COMODITIES": "Anderson",
+        "MARGARINAS/MANTEIGAS": "Anderson",
+        "REQUEIJAO/QUEIJOS CREMOSOS": "Anderson",
+        "IOGURTES": "Anderson",
+        "ANTEPASTOS/SOBREMESAS/APER": "Anderson",
+        "MASSAS REFRIGERADAS": "Anderson",
+        "BEBIDAS LACTEAS": "Anderson",
+        
+        // Erilana
+        "ARTIGOS CHURRASCO": "Erilana",
+        "BAZAR": "Erilana",
+        "PLANTAS": "Erilana",
+        
+        // Joseane
+        "BOMBONIERE": "Joseane",
+        "MERCEARIA DOCE": "Joseane",
+        "MATINAIS": "Joseane",
+        "CONGELADOS": "Joseane",
+        
+        // Andreia Silva
+        "BEBIDAS NAO ALCOOLICAS": "Andreia Silva",
+        "BEBIDAS ALCOOLICAS": "Andreia Silva",
+        "SUPLEMENTOS NUTRICIONAIS": "Andreia Silva",
+        
+        // Marcelo
+        "LIMPEZA": "Marcelo",
+        "HIGIENE E PERFUMARIA": "Marcelo",
+        "DESCARTAVEIS": "Marcelo",
+        
+        // Glacirene
+        "DIANTEIRA C/ OSSO": "Glacirene",
+        "DIANTEIRA S/ OSSO": "Glacirene",
+        "TRASEIRA S/ OSSO": "Glacirene",
+        "AVES": "Glacirene",
+        "TRASEIRA C/ OSSO": "Glacirene",
+        "INDUSTRIALIZADOS": "Glacirene",
+        "MIUDOS": "Glacirene",
+        "SUINOS": "Glacirene",
+        "OVINOS": "Glacirene",
+        "PEIXES / MARISCOS": "Glacirene",
+        
+        // Joao
+        "FRUTAS": "Joao",
+        "LEGUMES": "Joao",
+        "VERDURAS": "Joao",
+        "OVOS": "Joao",
+        
+        // Wendell
+        "TEMPEROS/CONDIMENTOS": "Wendell",
+        "CONSERVAS": "Wendell",
+        "MASSAS": "Wendell",
+        "MOLHOS/ATOMATADOS": "Wendell",
+        
+        // Jhonatan
+        "FRUTAS SECAS": "Jhonatan",
+        "ROTISSERIA": "Jhonatan",
+        "PADARIA": "Jhonatan",
+        "GERAL": "Jhonatan",
+        "DOCURAS": "Jhonatan"
     },
     
     // Cores dos macros
     CORES: {
-        emporio: '#51cf66',
-        mercearia: '#ffd43b',
-        outros: '#4dabf7'
+        emporio: "#51cf66",
+        mercearia: "#ffd43b",
+        outros: "#4dabf7"
     }
 };
 
 function getComprador(grupo) {
-    return CONFIG.COMPRADORES[grupo] || 'NÃO MAPEADO';
+    return CONFIG.COMPRADORES[grupo] || "NAO MAPEADO";
 }
 
 function getMacroLoja(loja) {
-    if (CONFIG.MACROS.emporio.includes(loja)) return 'emporio';
-    if (CONFIG.MACROS.mercearia.includes(loja)) return 'mercearia';
-    return 'outros';
+    if (CONFIG.MACROS.emporio.includes(loja)) return "emporio";
+    if (CONFIG.MACROS.mercearia.includes(loja)) return "mercearia";
+    return "outros";
 }
