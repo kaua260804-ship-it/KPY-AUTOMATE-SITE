@@ -5,7 +5,7 @@ class RelatorioProcessor {
     constructor() {
         this.dadosProcessados = null;
         this.lojas = [];
-        this.grupos = [];
+        this.categorias = [];
         this.compradores = [];
         this.estatisticas = {};
         this.previewOriginal = "";
@@ -128,7 +128,7 @@ class RelatorioProcessor {
         }
         
         const produtos = [];
-        const gruposSet = new Set();
+        const categoriasSet = new Set();
         const compradoresSet = new Set();
         
         for (let i = linhaCabecalho + 1; i < dadosRaw.length; i++) {
@@ -149,8 +149,7 @@ class RelatorioProcessor {
             const subgrupo = colunas.subgrupo !== -1 ? (linha[colunas.subgrupo] || "") : "";
             const fornecedor = colunas.fornecedor !== -1 ? (linha[colunas.fornecedor] || "") : "";
             
-            if (grupo) gruposSet.add(grupo);
-            // Usar a funcao getComprador do compradores.js
+            if (categoria) categoriasSet.add(categoria);
             const comprador = getComprador(grupo);
             if (comprador) compradoresSet.add(comprador);
             
@@ -168,11 +167,11 @@ class RelatorioProcessor {
             });
         }
         
-        this.grupos = Array.from(gruposSet).sort();
+        this.categorias = Array.from(categoriasSet).sort();
         this.compradores = Array.from(compradoresSet).sort();
         
         console.log("Estoque processado: " + produtos.length + " produtos");
-        console.log("Grupos encontrados: " + this.grupos.length);
+        console.log("Categorias encontradas: " + this.categorias.length);
         console.log("Compradores encontrados: " + this.compradores.length);
         
         return produtos;
@@ -302,7 +301,6 @@ class RelatorioProcessor {
                 precoBase = encontrado.preco || 0;
             }
             
-            // Usar a funcao getComprador do compradores.js
             const comprador = getComprador(estq.grupo);
             
             resultados.push({
@@ -339,7 +337,7 @@ class RelatorioProcessor {
             dados: resultados,
             estatisticas: this.estatisticas,
             lojas: this.lojas,
-            grupos: this.grupos,
+            categorias: this.categorias,
             compradores: this.compradores
         };
     }
@@ -348,52 +346,71 @@ class RelatorioProcessor {
         const resultados = this.dadosProcessados;
         if (!resultados) return;
         
-        const totalRuptura = resultados.filter(r => r.ruptura === "RUPTURA").length;
-        const totalSemEstoque = resultados.filter(r => r.estqLoja === 0).length;
+        // CONTAGEM DE PRODUTOS ÚNICOS (por código) - NÃO registros repetidos
         const produtosUnicos = [...new Set(resultados.map(r => r.codigo))].length;
+        const totalRupturaUnicos = [...new Set(resultados.filter(r => r.ruptura === "RUPTURA").map(r => r.codigo))].length;
+        const totalSemEstoqueUnicos = [...new Set(resultados.filter(r => r.estqLoja === 0).map(r => r.codigo))].length;
+        const totalComEstoqueUnicos = produtosUnicos - totalSemEstoqueUnicos;
         
         this.estatisticas = {
             totalRegistros: resultados.length,
             totalProdutosUnicos: produtosUnicos,
             totalLojas: this.lojas.length,
-            totalRuptura: totalRuptura,
-            totalSemEstoque: totalSemEstoque,
-            totalComEstoque: produtosUnicos - totalSemEstoque,
-            percentualRuptura: produtosUnicos > 0 ? (totalRuptura / produtosUnicos) * 100 : 0,
+            totalCategorias: this.categorias.length,
+            totalCompradores: this.compradores.length,
+            totalRuptura: totalRupturaUnicos,
+            totalSemEstoque: totalSemEstoqueUnicos,
+            totalComEstoque: totalComEstoqueUnicos,
+            percentualRuptura: produtosUnicos > 0 ? (totalRupturaUnicos / produtosUnicos) * 100 : 0,
             quantidadeTotal: resultados.reduce((s, r) => s + r.estqLoja, 0),
             valorTotal: resultados.reduce((s, r) => s + r.valorEstoque, 0),
             porLoja: {},
-            porGrupo: {},
+            porCategoria: {},
             porComprador: {}
         };
         
+        // Estatísticas por Loja (produtos únicos)
         for (const loja of this.lojas) {
-            const pl = resultados.filter(r => r.loja === loja);
+            const produtosLoja = resultados.filter(r => r.loja === loja);
+            const codigosLoja = [...new Set(produtosLoja.map(r => r.codigo))];
+            const rupturaLoja = [...new Set(produtosLoja.filter(r => r.ruptura === "RUPTURA").map(r => r.codigo))];
+            
             this.estatisticas.porLoja[loja] = {
-                quantidade: pl.reduce((s, r) => s + r.estqLoja, 0),
-                valor: pl.reduce((s, r) => s + r.valorEstoque, 0),
-                produtos: pl.length,
-                ruptura: pl.filter(r => r.ruptura === "RUPTURA").length
+                quantidade: produtosLoja.reduce((s, r) => s + r.estqLoja, 0),
+                valor: produtosLoja.reduce((s, r) => s + r.valorEstoque, 0),
+                produtos: codigosLoja.length,
+                ruptura: rupturaLoja.length,
+                percentualRuptura: codigosLoja.length > 0 ? (rupturaLoja.length / codigosLoja.length) * 100 : 0
             };
         }
         
-        for (const grupo of this.grupos) {
-            const pg = resultados.filter(r => r.grupo === grupo);
-            this.estatisticas.porGrupo[grupo] = {
-                quantidade: pg.reduce((s, r) => s + r.estqLoja, 0),
-                valor: pg.reduce((s, r) => s + r.valorEstoque, 0),
-                produtos: pg.length,
-                ruptura: pg.filter(r => r.ruptura === "RUPTURA").length
+        // Estatísticas por Categoria (produtos únicos)
+        for (const categoria of this.categorias) {
+            const produtosCategoria = resultados.filter(r => r.categoria === categoria);
+            const codigosCategoria = [...new Set(produtosCategoria.map(r => r.codigo))];
+            const rupturaCategoria = [...new Set(produtosCategoria.filter(r => r.ruptura === "RUPTURA").map(r => r.codigo))];
+            
+            this.estatisticas.porCategoria[categoria] = {
+                quantidade: produtosCategoria.reduce((s, r) => s + r.estqLoja, 0),
+                valor: produtosCategoria.reduce((s, r) => s + r.valorEstoque, 0),
+                produtos: codigosCategoria.length,
+                ruptura: rupturaCategoria.length,
+                percentualRuptura: codigosCategoria.length > 0 ? (rupturaCategoria.length / codigosCategoria.length) * 100 : 0
             };
         }
         
+        // Estatísticas por Comprador (produtos únicos)
         for (const comprador of this.compradores) {
-            const pc = resultados.filter(r => r.comprador === comprador);
+            const produtosComprador = resultados.filter(r => r.comprador === comprador);
+            const codigosComprador = [...new Set(produtosComprador.map(r => r.codigo))];
+            const rupturaComprador = [...new Set(produtosComprador.filter(r => r.ruptura === "RUPTURA").map(r => r.codigo))];
+            
             this.estatisticas.porComprador[comprador] = {
-                quantidade: pc.reduce((s, r) => s + r.estqLoja, 0),
-                valor: pc.reduce((s, r) => s + r.valorEstoque, 0),
-                produtos: pc.length,
-                ruptura: pc.filter(r => r.ruptura === "RUPTURA").length
+                quantidade: produtosComprador.reduce((s, r) => s + r.estqLoja, 0),
+                valor: produtosComprador.reduce((s, r) => s + r.valorEstoque, 0),
+                produtos: codigosComprador.length,
+                ruptura: rupturaComprador.length,
+                percentualRuptura: codigosComprador.length > 0 ? (rupturaComprador.length / codigosComprador.length) * 100 : 0
             };
         }
     }
@@ -406,10 +423,10 @@ class RelatorioProcessor {
         return this.dadosProcessados.filter(p => lojasNorm.includes(this.normalizarLoja(p.loja)));
     }
 
-    filtrarPorGrupos(gruposSelecionados) {
+    filtrarPorCategorias(categoriasSelecionadas) {
         if (!this.dadosProcessados) return [];
-        if (!gruposSelecionados || gruposSelecionados.length === 0) return this.dadosProcessados;
-        return this.dadosProcessados.filter(p => gruposSelecionados.includes(p.grupo));
+        if (!categoriasSelecionadas || categoriasSelecionadas.length === 0) return this.dadosProcessados;
+        return this.dadosProcessados.filter(p => categoriasSelecionadas.includes(p.categoria));
     }
 
     filtrarPorCompradores(compradoresSelecionados) {
@@ -418,68 +435,80 @@ class RelatorioProcessor {
         return this.dadosProcessados.filter(p => compradoresSelecionados.includes(p.comprador));
     }
 
-    getResumoFiltrado(lojasSelecionadas = [], gruposSelecionados = [], compradoresSelecionados = []) {
+    getResumoFiltrado(lojasSelecionadas = [], categoriasSelecionadas = [], compradoresSelecionados = []) {
         let dadosFiltrados = this.dadosProcessados;
         
         if (lojasSelecionadas.length) {
             const lojasNorm = lojasSelecionadas.map(l => this.normalizarLoja(l));
             dadosFiltrados = dadosFiltrados.filter(p => lojasNorm.includes(this.normalizarLoja(p.loja)));
         }
-        if (gruposSelecionados.length) {
-            dadosFiltrados = dadosFiltrados.filter(p => gruposSelecionados.includes(p.grupo));
+        if (categoriasSelecionadas.length) {
+            dadosFiltrados = dadosFiltrados.filter(p => categoriasSelecionadas.includes(p.categoria));
         }
         if (compradoresSelecionados.length) {
             dadosFiltrados = dadosFiltrados.filter(p => compradoresSelecionados.includes(p.comprador));
         }
         
         const lojas = [...new Set(dadosFiltrados.map(p => p.loja))];
-        const grupos = [...new Set(dadosFiltrados.map(p => p.grupo))];
+        const categorias = [...new Set(dadosFiltrados.map(p => p.categoria))];
         const compradores = [...new Set(dadosFiltrados.map(p => p.comprador))];
+        const produtosUnicos = [...new Set(dadosFiltrados.map(p => p.codigo))].length;
+        const totalRuptura = [...new Set(dadosFiltrados.filter(p => p.ruptura === "RUPTURA").map(p => p.codigo))].length;
+        
         const porLoja = {};
-        const porGrupo = {};
+        const porCategoria = {};
         const porComprador = {};
         
         for (const loja of lojas) {
             const pl = dadosFiltrados.filter(p => p.loja === loja);
+            const codigos = [...new Set(pl.map(p => p.codigo))];
+            const ruptura = [...new Set(pl.filter(p => p.ruptura === "RUPTURA").map(p => p.codigo))];
             porLoja[loja] = {
                 quantidade: pl.reduce((s, p) => s + p.estqLoja, 0),
                 valor: pl.reduce((s, p) => s + p.valorEstoque, 0),
-                produtos: pl.length,
-                ruptura: pl.filter(p => p.ruptura === "RUPTURA").length
+                produtos: codigos.length,
+                ruptura: ruptura.length,
+                percentualRuptura: codigos.length > 0 ? (ruptura.length / codigos.length) * 100 : 0
             };
         }
         
-        for (const grupo of grupos) {
-            const pg = dadosFiltrados.filter(p => p.grupo === grupo);
-            porGrupo[grupo] = {
-                quantidade: pg.reduce((s, p) => s + p.estqLoja, 0),
-                valor: pg.reduce((s, p) => s + p.valorEstoque, 0),
-                produtos: pg.length,
-                ruptura: pg.filter(p => p.ruptura === "RUPTURA").length
+        for (const categoria of categorias) {
+            const pc = dadosFiltrados.filter(p => p.categoria === categoria);
+            const codigos = [...new Set(pc.map(p => p.codigo))];
+            const ruptura = [...new Set(pc.filter(p => p.ruptura === "RUPTURA").map(p => p.codigo))];
+            porCategoria[categoria] = {
+                quantidade: pc.reduce((s, p) => s + p.estqLoja, 0),
+                valor: pc.reduce((s, p) => s + p.valorEstoque, 0),
+                produtos: codigos.length,
+                ruptura: ruptura.length,
+                percentualRuptura: codigos.length > 0 ? (ruptura.length / codigos.length) * 100 : 0
             };
         }
         
         for (const comprador of compradores) {
-            const pc = dadosFiltrados.filter(p => p.comprador === comprador);
+            const pcomp = dadosFiltrados.filter(p => p.comprador === comprador);
+            const codigos = [...new Set(pcomp.map(p => p.codigo))];
+            const ruptura = [...new Set(pcomp.filter(p => p.ruptura === "RUPTURA").map(p => p.codigo))];
             porComprador[comprador] = {
-                quantidade: pc.reduce((s, p) => s + p.estqLoja, 0),
-                valor: pc.reduce((s, p) => s + p.valorEstoque, 0),
-                produtos: pc.length,
-                ruptura: pc.filter(p => p.ruptura === "RUPTURA").length
+                quantidade: pcomp.reduce((s, p) => s + p.estqLoja, 0),
+                valor: pcomp.reduce((s, p) => s + p.valorEstoque, 0),
+                produtos: codigos.length,
+                ruptura: ruptura.length,
+                percentualRuptura: codigos.length > 0 ? (ruptura.length / codigos.length) * 100 : 0
             };
         }
         
         return {
             totalRegistros: dadosFiltrados.length,
-            totalProdutosUnicos: [...new Set(dadosFiltrados.map(p => p.codigo))].length,
+            totalProdutosUnicos: produtosUnicos,
             totalLojas: lojas.length,
-            totalGrupos: grupos.length,
+            totalCategorias: categorias.length,
             totalCompradores: compradores.length,
             quantidadeTotal: dadosFiltrados.reduce((s, p) => s + p.estqLoja, 0),
             valorTotal: dadosFiltrados.reduce((s, p) => s + p.valorEstoque, 0),
-            totalRuptura: dadosFiltrados.filter(p => p.ruptura === "RUPTURA").length,
+            totalRuptura: totalRuptura,
             porLoja: porLoja,
-            porGrupo: porGrupo,
+            porCategoria: porCategoria,
             porComprador: porComprador
         };
     }
@@ -488,7 +517,7 @@ class RelatorioProcessor {
         if (!this.dadosProcessados) return {};
         return {
             "LOJA": [...new Set(this.dadosProcessados.map(p => p.loja))].sort(),
-            "GRUPO": [...new Set(this.dadosProcessados.map(p => p.grupo))].filter(g => g && g !== "NAO MAPEADO").sort(),
+            "CATEGORIA": [...new Set(this.dadosProcessados.map(p => p.categoria))].filter(c => c && c !== "NAO MAPEADO").sort(),
             "COMPRADOR": [...new Set(this.dadosProcessados.map(p => p.comprador))].filter(c => c !== "NAO MAPEADO").sort(),
             "RUPTURA": [...new Set(this.dadosProcessados.map(p => p.ruptura))].sort(),
             "STATUS DO ESTOQUE": [...new Set(this.dadosProcessados.map(p => p.statusEstoque))].sort(),
@@ -523,15 +552,15 @@ class RelatorioProcessor {
         return dados;
     }
 
-    exportarParaExcel(lojasSelecionadas = null, gruposSelecionados = null, compradoresSelecionados = null) {
+    exportarParaExcel(lojasSelecionadas = null, categoriasSelecionadas = null, compradoresSelecionados = null) {
         let dados = this.dadosProcessados;
         
         if (lojasSelecionadas && lojasSelecionadas.length > 0) {
             const lojasNorm = lojasSelecionadas.map(l => this.normalizarLoja(l));
             dados = dados.filter(p => lojasNorm.includes(this.normalizarLoja(p.loja)));
         }
-        if (gruposSelecionados && gruposSelecionados.length > 0) {
-            dados = dados.filter(p => gruposSelecionados.includes(p.grupo));
+        if (categoriasSelecionadas && categoriasSelecionadas.length > 0) {
+            dados = dados.filter(p => categoriasSelecionadas.includes(p.categoria));
         }
         if (compradoresSelecionados && compradoresSelecionados.length > 0) {
             dados = dados.filter(p => compradoresSelecionados.includes(p.comprador));
