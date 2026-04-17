@@ -2,10 +2,10 @@
 
 let relatorioDadosAtuais = null;
 let relatorioLojasDisponiveis = [];
-let relatorioGruposDisponiveis = [];
+let relatorioCategoriasDisponiveis = [];
 let relatorioCompradoresDisponiveis = [];
 let relatorioLojasSelecionadas = [];
-let relatorioGruposSelecionados = [];
+let relatorioCategoriasSelecionadas = [];
 let relatorioCompradoresSelecionados = [];
 let relatorioArquivoEstoque = null;
 let relatorioArquivoCurva = null;
@@ -62,7 +62,7 @@ function renderizarRelatorio() {
         <div id="resultadoAreaRelatorio" style="display: none;">
             <div id="cardsResultadoRelatorio" class="cards-grid"></div>
             <div id="resumoLojasRelatorio" class="preview-area" style="margin-bottom: 15px;"></div>
-            <div id="resumoGruposRelatorio" class="preview-area" style="margin-bottom: 15px;"></div>
+            <div id="resumoCategoriasRelatorio" class="preview-area" style="margin-bottom: 15px;"></div>
             <div id="resumoCompradoresRelatorio" class="preview-area" style="margin-bottom: 15px;"></div>
             <div class="preview-area">
                 <div class="preview-header">
@@ -88,7 +88,8 @@ function renderizarRelatorio() {
                     <li><strong>Media de Vendas</strong> - Arquivo fixo (media_vendas.xlsx)</li>
                 </ol>
                 <p>O relatorio identifica produtos em RUPTURA (com venda mas sem estoque).</p>
-                <p><strong>Funcionalidades:</strong> Filtrar por loja, grupo, comprador, Varrer (remover matriz, NC e zerados), Exportar para Excel.</p>
+                <p><strong>Funcionalidades:</strong> Filtrar por loja, categoria, comprador, Varrer (remover matriz, NC e zerados), Exportar para Excel.</p>
+                <p><strong>Observação:</strong> Os cards mostram PRODUTOS ÚNICOS (códigos distintos), não registros repetidos.</p>
             </div>
         </div>
     `;
@@ -200,12 +201,12 @@ function inicializarRelatorio() {
                 
                 relatorioDadosAtuais = resultado.dados;
                 relatorioLojasDisponiveis = resultado.lojas || [];
-                relatorioGruposDisponiveis = resultado.grupos || [];
+                relatorioCategoriasDisponiveis = resultado.categorias || [];
                 relatorioCompradoresDisponiveis = resultado.compradores || [];
                 relatorioProcessado = true;
                 
                 mostrarResultadoRelatorio(resultado);
-                showToast("✅ Relatorio gerado! " + resultado.dados.length + " registros, " + resultado.lojas.length + " lojas", "success");
+                showToast("✅ Relatorio gerado! " + resultado.estatisticas.totalProdutosUnicos + " produtos unicos, " + resultado.lojas.length + " lojas", "success");
                 
                 const btnFiltrar = document.getElementById("btnFiltrarRelatorio");
                 const btnVarrer = document.getElementById("btnVarrerRelatorio");
@@ -255,7 +256,7 @@ function mostrarResultadoRelatorio(resultado) {
     const resultadoArea = document.getElementById("resultadoAreaRelatorio");
     const cardsDiv = document.getElementById("cardsResultadoRelatorio");
     const resumoLojasDiv = document.getElementById("resumoLojasRelatorio");
-    const resumoGruposDiv = document.getElementById("resumoGruposRelatorio");
+    const resumoCategoriasDiv = document.getElementById("resumoCategoriasRelatorio");
     const resumoCompradoresDiv = document.getElementById("resumoCompradoresRelatorio");
     const previewContent = document.getElementById("previewContentRelatorio");
     
@@ -265,8 +266,7 @@ function mostrarResultadoRelatorio(resultado) {
     
     if (cardsDiv) {
         cardsDiv.innerHTML = `
-            <div class="card"><div class="card-title">📦 PRODUTOS</div><div class="card-value">${(stats.totalRegistros || 0).toLocaleString()}</div></div>
-            <div class="card"><div class="card-title">🆔 PRODUTOS UNICOS</div><div class="card-value">${(stats.totalProdutosUnicos || 0).toLocaleString()}</div></div>
+            <div class="card"><div class="card-title">📦 PRODUTOS UNICOS</div><div class="card-value">${(stats.totalProdutosUnicos || 0).toLocaleString()}</div></div>
             <div class="card"><div class="card-title">🏪 LOJAS</div><div class="card-value">${(stats.totalLojas || 0).toLocaleString()}</div></div>
             <div class="card"><div class="card-title">⚠️ % RUPTURA</div><div class="card-value">${(stats.percentualRuptura || 0).toFixed(1)}%</div></div>
             <div class="card"><div class="card-title">⚠️ EM RUPTURA</div><div class="card-value">${(stats.totalRuptura || 0).toLocaleString()}</div></div>
@@ -276,6 +276,7 @@ function mostrarResultadoRelatorio(resultado) {
         `;
     }
     
+    // Resumo por Loja
     if (resumoLojasDiv && stats.porLoja) {
         let html = '<div class="preview-header"><h4><i class="fas fa-store"></i> Ruptura por Loja</h4></div><div class="preview-content"><pre>';
         html += "LOJA                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
@@ -286,7 +287,7 @@ function mostrarResultadoRelatorio(resultado) {
             const nome = String(loja).slice(0, 34).padEnd(34);
             const produtos = String(dados.produtos || 0).padStart(10);
             const ruptura = String(dados.ruptura || 0).padStart(10);
-            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const percentual = (dados.percentualRuptura || 0).toFixed(1);
             const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
             html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
         }
@@ -294,24 +295,26 @@ function mostrarResultadoRelatorio(resultado) {
         resumoLojasDiv.innerHTML = html;
     }
     
-    if (resumoGruposDiv && stats.porGrupo) {
-        let html = '<div class="preview-header"><h4><i class="fas fa-folder"></i> Ruptura por Grupo</h4></div><div class="preview-content"><pre>';
-        html += "GRUPO                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
+    // Resumo por Categoria
+    if (resumoCategoriasDiv && stats.porCategoria) {
+        let html = '<div class="preview-header"><h4><i class="fas fa-folder"></i> Ruptura por Categoria</h4></div><div class="preview-content"><pre>';
+        html += "CATEGORIA                            PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
         html += "----------------------------------  ----------  ----------  -----  ------------------\n";
         
-        const gruposOrdenados = Object.entries(stats.porGrupo).sort((a, b) => b[1].valor - a[1].valor);
-        for (const [grupo, dados] of gruposOrdenados) {
-            const nome = String(grupo).slice(0, 34).padEnd(34);
+        const categoriasOrdenadas = Object.entries(stats.porCategoria).sort((a, b) => b[1].valor - a[1].valor);
+        for (const [categoria, dados] of categoriasOrdenadas) {
+            const nome = String(categoria).slice(0, 34).padEnd(34);
             const produtos = String(dados.produtos || 0).padStart(10);
             const ruptura = String(dados.ruptura || 0).padStart(10);
-            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const percentual = (dados.percentualRuptura || 0).toFixed(1);
             const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
             html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
         }
         html += "</pre></div>";
-        resumoGruposDiv.innerHTML = html;
+        resumoCategoriasDiv.innerHTML = html;
     }
     
+    // Resumo por Comprador
     if (resumoCompradoresDiv && stats.porComprador) {
         let html = '<div class="preview-header"><h4><i class="fas fa-users"></i> Ruptura por Comprador</h4></div><div class="preview-content"><pre>';
         html += "COMPRADOR                          PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
@@ -322,7 +325,7 @@ function mostrarResultadoRelatorio(resultado) {
             const nome = String(comprador).slice(0, 34).padEnd(34);
             const produtos = String(dados.produtos || 0).padStart(10);
             const ruptura = String(dados.ruptura || 0).padStart(10);
-            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const percentual = (dados.percentualRuptura || 0).toFixed(1);
             const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
             html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
         }
@@ -356,7 +359,7 @@ function atualizarPreviewRelatorioFiltrado() {
     
     const resumo = relatorioProcessor.getResumoFiltrado(
         relatorioLojasSelecionadas,
-        relatorioGruposSelecionados,
+        relatorioCategoriasSelecionadas,
         relatorioCompradoresSelecionados
     );
     
@@ -364,8 +367,8 @@ function atualizarPreviewRelatorioFiltrado() {
     if (relatorioLojasSelecionadas.length) {
         dadosFiltrados = dadosFiltrados.filter(p => relatorioLojasSelecionadas.includes(p.loja));
     }
-    if (relatorioGruposSelecionados.length) {
-        dadosFiltrados = dadosFiltrados.filter(p => relatorioGruposSelecionados.includes(p.grupo));
+    if (relatorioCategoriasSelecionadas.length) {
+        dadosFiltrados = dadosFiltrados.filter(p => relatorioCategoriasSelecionadas.includes(p.categoria));
     }
     if (relatorioCompradoresSelecionados.length) {
         dadosFiltrados = dadosFiltrados.filter(p => relatorioCompradoresSelecionados.includes(p.comprador));
@@ -375,27 +378,26 @@ function atualizarPreviewRelatorioFiltrado() {
     const filterBadge = document.getElementById("filterBadgeRelatorio");
     const cardsDiv = document.getElementById("cardsResultadoRelatorio");
     const resumoLojasDiv = document.getElementById("resumoLojasRelatorio");
-    const resumoGruposDiv = document.getElementById("resumoGruposRelatorio");
+    const resumoCategoriasDiv = document.getElementById("resumoCategoriasRelatorio");
     const resumoCompradoresDiv = document.getElementById("resumoCompradoresRelatorio");
     
-    const temFiltros = relatorioLojasSelecionadas.length > 0 || relatorioGruposSelecionados.length > 0 || relatorioCompradoresSelecionados.length > 0;
+    const temFiltros = relatorioLojasSelecionadas.length > 0 || relatorioCategoriasSelecionadas.length > 0 || relatorioCompradoresSelecionados.length > 0;
     
     if (temFiltros) {
         if (filterBadge) {
             filterBadge.style.display = "inline-flex";
             const filtros = [];
             if (relatorioLojasSelecionadas.length) filtros.push(relatorioLojasSelecionadas.length + " loja(s)");
-            if (relatorioGruposSelecionados.length) filtros.push(relatorioGruposSelecionados.length + " grupo(s)");
+            if (relatorioCategoriasSelecionadas.length) filtros.push(relatorioCategoriasSelecionadas.length + " categoria(s)");
             if (relatorioCompradoresSelecionados.length) filtros.push(relatorioCompradoresSelecionados.length + " comprador(es)");
             filterBadge.innerHTML = "🔽 " + filtros.join(", ");
         }
         
         if (cardsDiv) {
             cardsDiv.innerHTML = `
-                <div class="card"><div class="card-title">📦 PRODUTOS</div><div class="card-value">${(resumo.totalRegistros || 0).toLocaleString()}</div></div>
-                <div class="card"><div class="card-title">🆔 PRODUTOS UNICOS</div><div class="card-value">${(resumo.totalProdutosUnicos || 0).toLocaleString()}</div></div>
+                <div class="card"><div class="card-title">📦 PRODUTOS UNICOS</div><div class="card-value">${(resumo.totalProdutosUnicos || 0).toLocaleString()}</div></div>
                 <div class="card"><div class="card-title">🏪 LOJAS</div><div class="card-value">${(resumo.totalLojas || 0).toLocaleString()}</div></div>
-                <div class="card"><div class="card-title">⚠️ % RUPTURA</div><div class="card-value">${(resumo.totalRuptura > 0 && resumo.totalProdutosUnicos > 0 ? ((resumo.totalRuptura / resumo.totalProdutosUnicos) * 100).toFixed(1) : 0)}%</div></div>
+                <div class="card"><div class="card-title">⚠️ % RUPTURA</div><div class="card-value">${(resumo.totalProdutosUnicos > 0 ? ((resumo.totalRuptura / resumo.totalProdutosUnicos) * 100).toFixed(1) : 0)}%</div></div>
                 <div class="card"><div class="card-title">⚠️ EM RUPTURA</div><div class="card-value">${(resumo.totalRuptura || 0).toLocaleString()}</div></div>
                 <div class="card"><div class="card-title">💰 VALOR TOTAL</div><div class="card-value">R$ ${formatarNumeroBR(resumo.valorTotal || 0)}</div></div>
             `;
@@ -405,8 +407,7 @@ function atualizarPreviewRelatorioFiltrado() {
         const stats = relatorioProcessor.estatisticas || {};
         if (cardsDiv) {
             cardsDiv.innerHTML = `
-                <div class="card"><div class="card-title">📦 PRODUTOS</div><div class="card-value">${(stats.totalRegistros || 0).toLocaleString()}</div></div>
-                <div class="card"><div class="card-title">🆔 PRODUTOS UNICOS</div><div class="card-value">${(stats.totalProdutosUnicos || 0).toLocaleString()}</div></div>
+                <div class="card"><div class="card-title">📦 PRODUTOS UNICOS</div><div class="card-value">${(stats.totalProdutosUnicos || 0).toLocaleString()}</div></div>
                 <div class="card"><div class="card-title">🏪 LOJAS</div><div class="card-value">${(stats.totalLojas || 0).toLocaleString()}</div></div>
                 <div class="card"><div class="card-title">⚠️ % RUPTURA</div><div class="card-value">${(stats.percentualRuptura || 0).toFixed(1)}%</div></div>
                 <div class="card"><div class="card-title">⚠️ EM RUPTURA</div><div class="card-value">${(stats.totalRuptura || 0).toLocaleString()}</div></div>
@@ -421,7 +422,7 @@ function atualizarPreviewRelatorioFiltrado() {
         previewContent.innerHTML = "<pre>" + formatarPreviewRelatorio((dadosFiltrados || []).slice(0, 20)) + "</pre>";
     }
     
-    // Atualizar resumos
+    // Atualizar resumo de lojas
     if (resumoLojasDiv && resumo.porLoja) {
         let html = '<div class="preview-header"><h4><i class="fas fa-store"></i> Ruptura por Loja</h4></div><div class="preview-content"><pre>';
         html += "LOJA                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
@@ -432,7 +433,7 @@ function atualizarPreviewRelatorioFiltrado() {
             const nome = String(loja).slice(0, 34).padEnd(34);
             const produtos = String(dados.produtos || 0).padStart(10);
             const ruptura = String(dados.ruptura || 0).padStart(10);
-            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const percentual = (dados.percentualRuptura || 0).toFixed(1);
             const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
             html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
         }
@@ -440,35 +441,37 @@ function atualizarPreviewRelatorioFiltrado() {
         resumoLojasDiv.innerHTML = html;
     }
     
-    if (resumoGruposDiv && resumo.porGrupo) {
-        let html = '<div class="preview-header"><h4><i class="fas fa-folder"></i> Ruptura por Grupo</h4></div><div class="preview-content"><pre>';
-        html += "GRUPO                                PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
+    // Atualizar resumo de categorias
+    if (resumoCategoriasDiv && resumo.porCategoria) {
+        let html = '<div class="preview-header"><h4><i class="fas fa-folder"></i> Ruptura por Categoria</h4></div><div class="preview-content"><pre>';
+        html += "CATEGORIA                            PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
         html += "----------------------------------  ----------  ----------  -----  ------------------\n";
         
-        const gruposOrdenados = Object.entries(resumo.porGrupo).sort((a, b) => b[1].valor - a[1].valor);
-        for (const [grupo, dados] of gruposOrdenados) {
-            const nome = String(grupo).slice(0, 34).padEnd(34);
+        const categoriasOrdenadas = Object.entries(resumo.porCategoria).sort((a, b) => b[1].valor - a[1].valor);
+        for (const [categoria, dados] of categoriasOrdenadas) {
+            const nome = String(categoria).slice(0, 34).padEnd(34);
             const produtos = String(dados.produtos || 0).padStart(10);
             const ruptura = String(dados.ruptura || 0).padStart(10);
-            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const percentual = (dados.percentualRuptura || 0).toFixed(1);
             const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
             html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
         }
         html += "</pre></div>";
-        resumoGruposDiv.innerHTML = html;
+        resumoCategoriasDiv.innerHTML = html;
     }
     
+    // Atualizar resumo de compradores
     if (resumoCompradoresDiv && resumo.porComprador) {
         let html = '<div class="preview-header"><h4><i class="fas fa-users"></i> Ruptura por Comprador</h4></div><div class="preview-content"><pre>';
         html += "COMPRADOR                          PRODUTOS    RUPTURA     %       VALOR ESTOQUE\n";
         html += "----------------------------------  ----------  ----------  -----  ------------------\n";
         
-        const compradoresOrdenados = Object.entries(resumo.porComprador).sort((a, b) => b[1].valor - a[1].valor);
-        for (const [comprador, dados] of compradoresOrdenados) {
+        const compradoresOrdenadas = Object.entries(resumo.porComprador).sort((a, b) => b[1].valor - a[1].valor);
+        for (const [comprador, dados] of compradoresOrdenadas) {
             const nome = String(comprador).slice(0, 34).padEnd(34);
             const produtos = String(dados.produtos || 0).padStart(10);
             const ruptura = String(dados.ruptura || 0).padStart(10);
-            const percentual = dados.produtos > 0 ? ((dados.ruptura / dados.produtos) * 100).toFixed(1) : 0;
+            const percentual = (dados.percentualRuptura || 0).toFixed(1);
             const valor = ("R$ " + formatarNumeroBR(dados.valor || 0)).padStart(18);
             html += nome + "  " + produtos + "  " + ruptura + "  " + String(percentual).padStart(5) + "%  " + valor + "\n";
         }
@@ -494,8 +497,8 @@ function abrirFiltroRelatorio() {
                     <div id="filtroLojasList" style="max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px;"></div>
                 </div>
                 <div style="margin-bottom: 20px;">
-                    <h4 style="color:#ffd43b; margin-bottom: 10px;">📂 GRUPOS</h4>
-                    <div id="filtroGruposList" style="max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px;"></div>
+                    <h4 style="color:#ffd43b; margin-bottom: 10px;">📁 CATEGORIAS</h4>
+                    <div id="filtroCategoriasList" style="max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px;"></div>
                 </div>
                 <div style="margin-bottom: 20px;">
                     <h4 style="color:#ffd43b; margin-bottom: 10px;">👥 COMPRADORES</h4>
@@ -524,14 +527,14 @@ function abrirFiltroRelatorio() {
         `;
     });
     
-    // Preencher grupos
-    const gruposDiv = document.getElementById("filtroGruposList");
-    relatorioGruposDisponiveis.sort().forEach(grupo => {
-        const checked = relatorioGruposSelecionados.includes(grupo) ? "checked" : "";
-        gruposDiv.innerHTML += `
+    // Preencher categorias
+    const categoriasDiv = document.getElementById("filtroCategoriasList");
+    relatorioCategoriasDisponiveis.sort().forEach(categoria => {
+        const checked = relatorioCategoriasSelecionadas.includes(categoria) ? "checked" : "";
+        categoriasDiv.innerHTML += `
             <label style="display:flex; align-items:center; padding:6px; cursor:pointer; border-radius:6px; margin-bottom:2px;">
-                <input type="checkbox" value="${grupo.replace(/"/g, "&quot;")}" ${checked} style="margin-right:10px;">
-                <span style="font-size:12px;">${grupo}</span>
+                <input type="checkbox" value="${categoria.replace(/"/g, "&quot;")}" ${checked} style="margin-right:10px;">
+                <span style="font-size:12px;">${categoria}</span>
             </label>
         `;
     });
@@ -553,18 +556,18 @@ function abrirFiltroRelatorio() {
     document.getElementById("cancelFiltroBtn").onclick = closeModal;
     
     document.getElementById("limparFiltrosBtn").onclick = () => {
-        document.querySelectorAll("#filtroLojasList input, #filtroGruposList input, #filtroCompradoresList input").forEach(cb => cb.checked = false);
+        document.querySelectorAll("#filtroLojasList input, #filtroCategoriasList input, #filtroCompradoresList input").forEach(cb => cb.checked = false);
     };
     
     document.getElementById("aplicarFiltroBtn").onclick = () => {
         relatorioLojasSelecionadas = Array.from(document.querySelectorAll("#filtroLojasList input:checked")).map(cb => cb.value);
-        relatorioGruposSelecionados = Array.from(document.querySelectorAll("#filtroGruposList input:checked")).map(cb => cb.value);
+        relatorioCategoriasSelecionadas = Array.from(document.querySelectorAll("#filtroCategoriasList input:checked")).map(cb => cb.value);
         relatorioCompradoresSelecionados = Array.from(document.querySelectorAll("#filtroCompradoresList input:checked")).map(cb => cb.value);
         atualizarPreviewRelatorioFiltrado();
         closeModal();
         let msg = "";
         if (relatorioLojasSelecionadas.length) msg += relatorioLojasSelecionadas.length + " loja(s) ";
-        if (relatorioGruposSelecionados.length) msg += relatorioGruposSelecionados.length + " grupo(s) ";
+        if (relatorioCategoriasSelecionadas.length) msg += relatorioCategoriasSelecionadas.length + " categoria(s) ";
         if (relatorioCompradoresSelecionados.length) msg += relatorioCompradoresSelecionados.length + " comprador(es) ";
         showToast("✅ Filtro aplicado: " + msg, "success");
     };
@@ -633,11 +636,11 @@ function exportarRelatorio() {
     try {
         const workbook = relatorioProcessor.exportarParaExcel(
             relatorioLojasSelecionadas.length ? relatorioLojasSelecionadas : null,
-            relatorioGruposSelecionados.length ? relatorioGruposSelecionados : null,
+            relatorioCategoriasSelecionadas.length ? relatorioCategoriasSelecionadas : null,
             relatorioCompradoresSelecionados.length ? relatorioCompradoresSelecionados : null
         );
         const nomeArquivo = "Relatorio_Ruptura_" + new Date().toISOString().slice(0,19).replace(/:/g, "-") + ".xlsx";
-        XLSX.writeFile(workbook, nomeArquivo);
+        XLSX.writeFile(wb, nomeArquivo);
         showToast("✅ Arquivo exportado!", "success");
     } catch (error) {
         console.error(error);
@@ -648,10 +651,10 @@ function exportarRelatorio() {
 function limparRelatorio() {
     relatorioDadosAtuais = null;
     relatorioLojasDisponiveis = [];
-    relatorioGruposDisponiveis = [];
+    relatorioCategoriasDisponiveis = [];
     relatorioCompradoresDisponiveis = [];
     relatorioLojasSelecionadas = [];
-    relatorioGruposSelecionados = [];
+    relatorioCategoriasSelecionadas = [];
     relatorioCompradoresSelecionados = [];
     relatorioArquivoEstoque = null;
     relatorioArquivoCurva = null;
