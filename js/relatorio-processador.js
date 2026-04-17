@@ -4,6 +4,8 @@ class RelatorioProcessor {
     constructor() {
         this.dadosProcessados = null;
         this.lojas = [];
+        this.grupos = [];
+        this.compradores = [];
         this.estatisticas = {};
         this.previewOriginal = "";
         this.ultimosFiltros = {};
@@ -16,7 +18,6 @@ class RelatorioProcessor {
             return CONFIG.COMPRADORES[grupo] || "NAO MAPEADO";
         }
         
-        // Fallback (caso o config nao esteja disponivel)
         const MAPA_COMPRADORES = {
             "QUEIJOS ESPECIAIS": "Anderson",
             "EMBUTIDOS/DEFUMADOS": "Anderson",
@@ -33,7 +34,7 @@ class RelatorioProcessor {
             "PLANTAS": "Erilana",
             "BOMBONIERE": "Joseane",
             "MERCEARIA DOCE": "Joseane",
-            "MATINAIS": "Joseane",
+            "MATINAIS": "oseane",
             "CONGELADOS": "Joseane",
             "BEBIDAS NAO ALCOOLICAS": "Andreia Silva",
             "BEBIDAS ALCOOLICAS": "Andreia Silva",
@@ -189,6 +190,9 @@ class RelatorioProcessor {
         }
         
         const produtos = [];
+        const gruposSet = new Set();
+        const compradoresSet = new Set();
+        
         for (let i = linhaCabecalho + 1; i < dadosRaw.length; i++) {
             const linha = dadosRaw[i];
             if (!linha) continue;
@@ -207,6 +211,10 @@ class RelatorioProcessor {
             const subgrupo = colunas.subgrupo !== -1 ? (linha[colunas.subgrupo] || "") : "";
             const fornecedor = colunas.fornecedor !== -1 ? (linha[colunas.fornecedor] || "") : "";
             
+            if (grupo) gruposSet.add(grupo);
+            const comprador = this.getComprador(grupo);
+            if (comprador) compradoresSet.add(comprador);
+            
             produtos.push({
                 codigo: codigo,
                 codigoInt: parseInt(codigo),
@@ -216,10 +224,18 @@ class RelatorioProcessor {
                 categoria: categoria,
                 grupo: grupo,
                 subgrupo: subgrupo,
-                fornecedor: fornecedor
+                fornecedor: fornecedor,
+                comprador: comprador
             });
         }
+        
+        this.grupos = Array.from(gruposSet).sort();
+        this.compradores = Array.from(compradoresSet).sort();
+        
         console.log("Estoque processado: " + produtos.length + " produtos");
+        console.log("Grupos encontrados: " + this.grupos.length);
+        console.log("Compradores encontrados: " + this.compradores.length);
+        
         return produtos;
     }
 
@@ -251,14 +267,6 @@ class RelatorioProcessor {
         }
         
         console.log("Curva ABC processada: " + vendas.length + " registros de venda");
-        
-        if (vendas.length > 0) {
-            console.log("Primeiras 5 vendas:");
-            vendas.slice(0, 5).forEach(v => {
-                console.log("   Codigo: " + v.codigo + ", Loja: " + v.loja + ", Qtd: " + v.qtd);
-            });
-        }
-        
         return vendas;
     }
 
@@ -322,14 +330,12 @@ class RelatorioProcessor {
             const key = venda.codigo + "|" + venda.loja;
             vendasMap.set(key, venda.qtd);
         }
-        console.log("Mapa de vendas criado com " + vendasMap.size + " combinacoes");
         
         const mediaMap = new Map();
         for (const media of dadosMedia) {
             const key = media.codigo + "|" + media.loja;
             mediaMap.set(key, media.qtd);
         }
-        console.log("Mapa de media criado com " + mediaMap.size + " combinacoes");
         
         const nomeMatriz = "COMCARNE MATRIZ SAO LUIS";
         const matrizNormalizada = this.normalizarLoja(nomeMatriz);
@@ -339,7 +345,6 @@ class RelatorioProcessor {
                 estoqueMatriz.set(estq.codigo, estq.estoqueLoja);
             }
         }
-        console.log("Estoque matriz calculado para " + estoqueMatriz.size + " produtos");
         
         const resultados = [];
         let comVenda = 0;
@@ -380,8 +385,6 @@ class RelatorioProcessor {
             });
         }
         
-        console.log("Cadeamento: " + comVenda + " produtos com venda, " + (dadosEstoque.length - comVenda) + " sem venda");
-        
         this.dadosProcessados = resultados;
         this.lojas = [...new Set(resultados.map(r => r.loja))];
         
@@ -393,7 +396,9 @@ class RelatorioProcessor {
             success: true,
             dados: resultados,
             estatisticas: this.estatisticas,
-            lojas: this.lojas
+            lojas: this.lojas,
+            grupos: this.grupos,
+            compradores: this.compradores
         };
     }
 
@@ -429,11 +434,102 @@ class RelatorioProcessor {
         }
     }
 
+    // ========== METODOS DE FILTRO ==========
     filtrarPorLojas(lojasSelecionadas) {
         if (!this.dadosProcessados) return [];
         if (!lojasSelecionadas || lojasSelecionadas.length === 0) return this.dadosProcessados;
         const lojasNorm = lojasSelecionadas.map(l => this.normalizarLoja(l));
         return this.dadosProcessados.filter(p => lojasNorm.includes(this.normalizarLoja(p.loja)));
+    }
+
+    filtrarPorGrupos(gruposSelecionados) {
+        if (!this.dadosProcessados) return [];
+        if (!gruposSelecionados || gruposSelecionados.length === 0) return this.dadosProcessados;
+        return this.dadosProcessados.filter(p => gruposSelecionados.includes(p.grupo));
+    }
+
+    filtrarPorCompradores(compradoresSelecionados) {
+        if (!this.dadosProcessados) return [];
+        if (!compradoresSelecionados || compradoresSelecionados.length === 0) return this.dadosProcessados;
+        return this.dadosProcessados.filter(p => compradoresSelecionados.includes(p.comprador));
+    }
+
+    getResumoFiltrado(lojasSelecionadas = [], gruposSelecionados = [], compradoresSelecionados = []) {
+        let dadosFiltrados = this.dadosProcessados;
+        
+        if (lojasSelecionadas.length) {
+            const lojasNorm = lojasSelecionadas.map(l => this.normalizarLoja(l));
+            dadosFiltrados = dadosFiltrados.filter(p => lojasNorm.includes(this.normalizarLoja(p.loja)));
+        }
+        if (gruposSelecionados.length) {
+            dadosFiltrados = dadosFiltrados.filter(p => gruposSelecionados.includes(p.grupo));
+        }
+        if (compradoresSelecionados.length) {
+            dadosFiltrados = dadosFiltrados.filter(p => compradoresSelecionados.includes(p.comprador));
+        }
+        
+        const lojas = [...new Set(dadosFiltrados.map(p => p.loja))];
+        const grupos = [...new Set(dadosFiltrados.map(p => p.grupo))];
+        const compradores = [...new Set(dadosFiltrados.map(p => p.comprador))];
+        const porLoja = {};
+        const porGrupo = {};
+        const porComprador = {};
+        
+        for (const loja of lojas) {
+            const pl = dadosFiltrados.filter(p => p.loja === loja);
+            porLoja[loja] = {
+                quantidade: pl.reduce((s, p) => s + p.estqLoja, 0),
+                valor: pl.reduce((s, p) => s + p.valorEstoque, 0),
+                produtos: pl.length,
+                ruptura: pl.filter(p => p.ruptura === "RUPTURA").length
+            };
+        }
+        
+        for (const grupo of grupos) {
+            const pg = dadosFiltrados.filter(p => p.grupo === grupo);
+            porGrupo[grupo] = {
+                quantidade: pg.reduce((s, p) => s + p.estqLoja, 0),
+                valor: pg.reduce((s, p) => s + p.valorEstoque, 0),
+                produtos: pg.length,
+                ruptura: pg.filter(p => p.ruptura === "RUPTURA").length
+            };
+        }
+        
+        for (const comprador of compradores) {
+            const pc = dadosFiltrados.filter(p => p.comprador === comprador);
+            porComprador[comprador] = {
+                quantidade: pc.reduce((s, p) => s + p.estqLoja, 0),
+                valor: pc.reduce((s, p) => s + p.valorEstoque, 0),
+                produtos: pc.length,
+                ruptura: pc.filter(p => p.ruptura === "RUPTURA").length
+            };
+        }
+        
+        return {
+            totalRegistros: dadosFiltrados.length,
+            totalProdutosUnicos: [...new Set(dadosFiltrados.map(p => p.codigo))].length,
+            totalLojas: lojas.length,
+            totalGrupos: grupos.length,
+            totalCompradores: compradores.length,
+            quantidadeTotal: dadosFiltrados.reduce((s, p) => s + p.estqLoja, 0),
+            valorTotal: dadosFiltrados.reduce((s, p) => s + p.valorEstoque, 0),
+            totalRuptura: dadosFiltrados.filter(p => p.ruptura === "RUPTURA").length,
+            porLoja: porLoja,
+            porGrupo: porGrupo,
+            porComprador: porComprador
+        };
+    }
+
+    getValoresUnicos() {
+        if (!this.dadosProcessados) return {};
+        return {
+            "LOJA": [...new Set(this.dadosProcessados.map(p => p.loja))].sort(),
+            "GRUPO": [...new Set(this.dadosProcessados.map(p => p.grupo))].filter(g => g && g !== "NAO MAPEADO").sort(),
+            "COMPRADOR": [...new Set(this.dadosProcessados.map(p => p.comprador))].filter(c => c !== "NAO MAPEADO").sort(),
+            "RUPTURA": [...new Set(this.dadosProcessados.map(p => p.ruptura))].sort(),
+            "STATUS DO ESTOQUE": [...new Set(this.dadosProcessados.map(p => p.statusEstoque))].sort(),
+            "VENDA": [...new Set(this.dadosProcessados.map(p => p.venda))].sort()
+        };
     }
 
     varrerRelatorio() {
@@ -463,24 +559,18 @@ class RelatorioProcessor {
         return dados;
     }
 
-    getValoresUnicos() {
-        if (!this.dadosProcessados) return {};
-        return {
-            "LOJA": [...new Set(this.dadosProcessados.map(p => p.loja))].sort(),
-            "RUPTURA": [...new Set(this.dadosProcessados.map(p => p.ruptura))].sort(),
-            "STATUS DO ESTOQUE": [...new Set(this.dadosProcessados.map(p => p.statusEstoque))].sort(),
-            "CATEGORIA": [...new Set(this.dadosProcessados.map(p => p.categoria))].filter(c => c && c !== "NAO MAPEADO").sort(),
-            "GRUPO": [...new Set(this.dadosProcessados.map(p => p.grupo))].filter(g => g && g !== "NAO MAPEADO").sort(),
-            "VENDA": [...new Set(this.dadosProcessados.map(p => p.venda))].sort(),
-            "COMPRADOR": [...new Set(this.dadosProcessados.map(p => p.comprador))].filter(c => c !== "NAO MAPEADO").sort()
-        };
-    }
-
-    exportarParaExcel(lojasSelecionadas = null) {
+    exportarParaExcel(lojasSelecionadas = null, gruposSelecionados = null, compradoresSelecionados = null) {
         let dados = this.dadosProcessados;
+        
         if (lojasSelecionadas && lojasSelecionadas.length > 0) {
             const lojasNorm = lojasSelecionadas.map(l => this.normalizarLoja(l));
             dados = dados.filter(p => lojasNorm.includes(this.normalizarLoja(p.loja)));
+        }
+        if (gruposSelecionados && gruposSelecionados.length > 0) {
+            dados = dados.filter(p => gruposSelecionados.includes(p.grupo));
+        }
+        if (compradoresSelecionados && compradoresSelecionados.length > 0) {
+            dados = dados.filter(p => compradoresSelecionados.includes(p.comprador));
         }
         
         const planilha = dados.map(p => ({
