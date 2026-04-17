@@ -640,7 +640,7 @@ function exportarRelatorio() {
             relatorioCompradoresSelecionados.length ? relatorioCompradoresSelecionados : null
         );
         const nomeArquivo = "Relatorio_Ruptura_" + new Date().toISOString().slice(0,19).replace(/:/g, "-") + ".xlsx";
-        XLSX.writeFile(wb, nomeArquivo);
+        XLSX.writeFile(workbook, nomeArquivo);
         showToast("✅ Arquivo exportado!", "success");
     } catch (error) {
         console.error(error);
