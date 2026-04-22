@@ -46,12 +46,30 @@ class EntradasProcessor {
         });
     }
 
+    // Converte número no formato brasileiro CORRETAMENTE
     converterNumeroBR(valor) {
         if (valor === undefined || valor === null) return 0;
         if (typeof valor === "number") return valor;
+        
         let str = String(valor).trim();
         if (str === "") return 0;
-        str = str.replace(/\./g, "").replace(/,/g, ".");
+        
+        // Se já tem vírgula (formato brasileiro), converte
+        if (str.includes(",")) {
+            // Remove pontos de milhar e substitui vírgula por ponto
+            str = str.replace(/\./g, "");
+            str = str.replace(",", ".");
+            const num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+        }
+        
+        // Se tem ponto (formato internacional), mantém como está
+        if (str.includes(".")) {
+            const num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+        }
+        
+        // É um número inteiro
         const num = parseFloat(str);
         return isNaN(num) ? 0 : num;
     }
@@ -90,7 +108,7 @@ class EntradasProcessor {
                 const linhaProduto = [];
                 for (let j = 0; j <= 10; j++) {
                     if (j < linha.length && linha[j] !== undefined && linha[j] !== "") {
-                        linhaProduto.push(String(linha[j]).trim());
+                        linhaProduto.push(linha[j]);
                     } else {
                         linhaProduto.push("");
                     }
@@ -127,6 +145,8 @@ class EntradasProcessor {
             
             produto["Codigo"] = String(produto["Codigo"] || "").replace(/^0+/, "");
             produto["CodigoInt"] = parseInt(produto["Codigo"]) || 0;
+            
+            // Usar a função corrigida de conversão
             produto["Qtd"] = this.converterNumeroBR(produto["Qtd"]);
             produto["Total"] = this.converterNumeroBR(produto["Total"]);
             produto["Custo Md"] = this.converterNumeroBR(produto["Custo Md"]);
@@ -150,7 +170,7 @@ class EntradasProcessor {
                 prVda: produto["Pr. Vda"] || 0,
                 markup: produto["Markup"] || 0,
                 margem: produto["Margem"] || 0,
-                ultEnt: produto["Ult.Ent."] || "",
+                ultEnt: this.formatarData(produto["Ult.Ent."]),
                 categoria: produto["Categoria"] || "NAO MAPEADO",
                 grupo: produto["Grupo"] || "NAO MAPEADO",
                 comprador: produto["Comprador"]
@@ -213,6 +233,22 @@ class EntradasProcessor {
             grupos: this.grupos,
             compradores: this.compradores
         };
+    }
+
+    formatarData(valor) {
+        if (!valor) return "";
+        const str = String(valor).trim();
+        
+        // Se já está no formato DD/MM/AAAA
+        if (str.match(/^\d{2}\/\d{2}\/\d{4}$/)) return str;
+        
+        // Se está no formato DD/MM/AA
+        if (str.match(/^\d{2}\/\d{2}\/\d{2}$/)) {
+            const partes = str.split("/");
+            return `${partes[0]}/${partes[1]}/20${partes[2]}`;
+        }
+        
+        return str;
     }
 
     filtrarPorGrupos(gruposSelecionados) {
