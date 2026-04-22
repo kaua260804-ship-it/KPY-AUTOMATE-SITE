@@ -551,4 +551,37 @@ function exportarEntradasXLSX() {
         const nomeArquivo = "Entradas_" + new Date().toISOString().slice(0,19).replace(/:/g, "-") + ".xlsx";
         XLSX.writeFile(wb, nomeArquivo);
         showToast("✅ Arquivo exportado!", "success");
+    } catch (error) {
+        console.error(error);
+        showToast("❌ Erro ao exportar: " + error.message, "error");
     }
+}
+
+function limparEntradas() {
+    entradasDadosAtuais = null;
+    entradasGruposDisponiveis = [];
+    entradasCompradoresDisponiveis = [];
+    entradasGruposSelecionados = [];
+    entradasCompradoresSelecionados = [];
+    
+    const resultadoArea = document.getElementById("resultadoAreaEntradas");
+    if (resultadoArea) resultadoArea.style.display = "none";
+    
+    const btnFiltrarGrupo = document.getElementById("btnFiltrarGrupoEntradas");
+    const btnFiltrarComprador = document.getElementById("btnFiltrarCompradorEntradas");
+    const btnExportar = document.getElementById("btnExportarEntradas");
+    const btnLimpar = document.getElementById("btnLimparEntradas");
+    
+    if (btnFiltrarGrupo) btnFiltrarGrupo.style.display = "none";
+    if (btnFiltrarComprador) btnFiltrarComprador.style.display = "none";
+    if (btnExportar) btnExportar.style.display = "none";
+    if (btnLimpar) btnLimpar.style.display = "none";
+    
+    const statusSpan = document.getElementById("statusUploadEntradas");
+    if (statusSpan) statusSpan.innerHTML = "Aguardando arquivo";
+    
+    const fileInput = document.getElementById("fileInputEntradas");
+    if (fileInput) fileInput.value = "";
+    
+    showToast("Dados limpos!", "info");
+}
